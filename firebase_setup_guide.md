@@ -85,13 +85,13 @@ service cloud.firestore {
       allow write: if isAdmin();
     }
 
-    // Test Sessions: Publicly readable. Users can only create their own session. 
-    // Admins can create sessions for anyone (for seeding sample data).
-    // Modification is disallowed to protect data integrity.
+    // Test Sessions: Publicly readable. Users can only create their own session.
+    // Admins can create sessions for seeding and delete records. Modification is disallowed to protect data integrity.
     match /test-sessions/{sessionId} {
       allow create: if (isSignedIn() && request.resource.data.userId == request.auth.uid) || isAdmin();
       allow read: if true;
-      allow update, delete: if false; // Disallow modification to protect integrity
+      allow update: if false; // Updates are disallowed to protect integrity
+      allow delete: if isAdmin(); // Admins can delete records
     }
 
     // Leaderboard: Publicly readable. Users can only create/update their own entry.

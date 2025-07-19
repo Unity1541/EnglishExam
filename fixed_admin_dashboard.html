@@ -1105,7 +1105,7 @@
                         if (docs.length > 0) {
                             docs.forEach(doc => {
                                 const s = doc.data();
-                                table.innerHTML += `<tr><td>${s.timestamp.toDate().toLocaleString()}</td><td>${s.nickname}</td><td>${s.articleTitle}</td><td>${s.score}%</td><td><a href="test_result_analyzer.html?sessionId=${doc.id}" target="_blank" class="btn btn-secondary" style="padding:0.4rem 0.8rem;font-size:0.8rem;">分析</a></td></tr>`;
+                                table.innerHTML += `<tr id="session-row-${doc.id}"><td>${s.timestamp.toDate().toLocaleString()}</td><td>${s.nickname}</td><td>${s.articleTitle}</td><td>${s.score}%</td><td><a href="test_result_analyzer.html?sessionId=${doc.id}" target="_blank" class="btn btn-secondary" style="padding:0.4rem 0.8rem;font-size:0.8rem;">分析</a><button class="btn btn-danger" style="padding:0.4rem 0.8rem; margin-left:0.5rem" onclick="handlers.confirmDeleteSession('${doc.id}')">刪除</button></td></tr>`;
                             });
                             state.pagination.sessions.lastVisible = lastVisible;
                         }
@@ -1376,6 +1376,23 @@
                 } catch (e) {
                     console.error("Failed to delete article:", e);
                     ui.showNotification(`刪除文章失敗: ${e.message}`, 'error');
+                }
+            },
+
+            confirmDeleteSession(sessionId) {
+                ui.showConfirmation('刪除測驗記錄', '您確定要刪除這筆測驗記錄嗎？此操作無法復原。', () => this.deleteSession(sessionId));
+            },
+
+            async deleteSession(sessionId) {
+                try {
+                    await state.db.collection('test-sessions').doc(sessionId).delete();
+                    ui.showNotification('測驗記錄已刪除', 'success');
+                    const row = document.getElementById(`session-row-${sessionId}`);
+                    if (row) {
+                        row.remove();
+                    }
+                } catch (e) {
+                    ui.showNotification(`刪除失敗: ${e.message}`, 'error');
                 }
             },
 
