@@ -1,0 +1,853 @@
+
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>測驗結果分析 - English Reading Hub</title>
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+    <!-- Chart.js for visualization -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Central Firebase Config -->
+    <script src="firebase-config.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Noto+Sans+TC:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary-color: #6366f1;
+            --success-color: #10b981;
+            --warning-color: #f59e0b;
+            --error-color: #ef4444;
+            --info-color: #06b6d4;
+            
+            --bg-primary: #0f0f1e;
+            --bg-secondary: #1a1a2e;
+            --bg-card: rgba(255, 255, 255, 0.05);
+            
+            --text-primary: #ffffff;
+            --text-secondary: #cbd5e1;
+            --text-muted: #94a3b8;
+            
+            --border-color: rgba(255, 255, 255, 0.1);
+            --shadow-medium: 0 8px 32px rgba(0, 0, 0, 0.2);
+            
+            --gradient-primary: linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #ec4899 100%);
+            --gradient-success: linear-gradient(135deg, #10b981, #059669);
+            --gradient-warning: linear-gradient(135deg, #f59e0b, #d97706);
+            --gradient-error: linear-gradient(135deg, #ef4444, #dc2626);
+        }
+
+        body {
+            font-family: 'Inter', 'Noto Sans TC', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.6;
+            min-height: 100vh;
+        }
+
+        .background-animation {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            background: 
+                radial-gradient(circle at 20% 80%, rgba(99, 102, 241, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 80% 20%, rgba(236, 72, 153, 0.1) 0%, transparent 50%);
+            animation: backgroundFloat 20s ease-in-out infinite;
+        }
+
+        @keyframes backgroundFloat {
+            0%, 100% { transform: translateY(0px) rotate(0deg); }
+            50% { transform: translateY(-20px) rotate(1deg); }
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 3rem;
+            padding: 2rem;
+            background: var(--bg-card);
+            border-radius: 2rem;
+            border: 1px solid var(--border-color);
+            backdrop-filter: blur(20px);
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            font-weight: 800;
+            margin-bottom: 1rem;
+            background: var(--gradient-primary);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .header p {
+            color: var(--text-secondary);
+            font-size: 1.1rem;
+        }
+
+        .analysis-grid {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .main-analysis {
+            display: flex;
+            flex-direction: column;
+            gap: 2rem;
+        }
+
+        .score-card {
+            background: var(--bg-card);
+            border-radius: 1.5rem;
+            padding: 2rem;
+            border: 1px solid var(--border-color);
+            backdrop-filter: blur(20px);
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 1rem;
+        }
+        
+        .chart-container {
+            position: relative;
+            width: 200px;
+            height: 200px;
+            margin-bottom: 1rem;
+        }
+
+        #scoreChart {
+            width: 100%;
+            height: 100%;
+        }
+
+        .score-display {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 3.5rem;
+            font-weight: 800;
+            background: var(--gradient-success);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .score-label {
+            font-size: 1.2rem;
+            color: var(--text-secondary);
+        }
+
+        .score-details {
+            display: flex;
+            justify-content: space-around;
+            width: 100%;
+            margin-top: 1rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--border-color);
+        }
+
+        .detail-item {
+            text-align: center;
+        }
+
+        .detail-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+
+        .detail-label {
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            margin-top: 0.5rem;
+        }
+        
+        .sidebar {
+            display: flex;
+            flex-direction: column;
+            gap: 2rem;
+        }
+
+        .achievements-card {
+            background: var(--bg-card);
+            border-radius: 1.5rem;
+            padding: 2rem;
+            border: 1px solid var(--border-color);
+            backdrop-filter: blur(20px);
+        }
+
+        .achievement-item {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 1rem;
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 1rem;
+            margin-bottom: 1rem;
+            position: relative;
+        }
+
+        .achievement-item.new-achievement {
+            background: rgba(251, 191, 36, 0.1);
+            border: 1px solid rgba(251, 191, 36, 0.3);
+        }
+        
+        .achievement-item.new-achievement::after {
+            content: '新!';
+            position: absolute;
+            top: 0.5rem;
+            right: 0.5rem;
+            background: var(--warning-color);
+            color: black;
+            font-size: 0.7rem;
+            padding: 0.1rem 0.4rem;
+            border-radius: 0.5rem;
+            font-weight: bold;
+        }
+
+        .achievement-icon {
+            width: 3rem;
+            height: 3rem;
+            background: var(--gradient-primary);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            flex-shrink: 0;
+        }
+
+        .achievement-info h4 {
+            color: var(--text-primary);
+            font-size: 1rem;
+            margin-bottom: 0.25rem;
+        }
+
+        .achievement-info p {
+            color: var(--text-muted);
+            font-size: 0.8rem;
+        }
+
+        .detailed-analysis {
+            background: var(--bg-card);
+            border-radius: 1.5rem;
+            border: 1px solid var(--border-color);
+            backdrop-filter: blur(20px);
+            overflow: hidden;
+            grid-column: 1 / -1;
+        }
+
+        .analysis-header {
+            padding: 1.5rem 2rem;
+            border-bottom: 1px solid var(--border-color);
+            background: rgba(255, 255, 255, 0.02);
+        }
+        
+        .section-title {
+            font-size: 1.4rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .analysis-content {
+            padding: 2rem;
+        }
+
+        .question-analysis {
+            margin-bottom: 2rem;
+            padding: 1.5rem;
+            background: rgba(255, 255, 255, 0.02);
+            border-radius: 1rem;
+            border-left: 4px solid var(--primary-color);
+        }
+
+        .question-analysis.correct {
+            border-left-color: var(--success-color);
+        }
+
+        .question-analysis.incorrect {
+            border-left-color: var(--error-color);
+        }
+
+        .question-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 1rem;
+        }
+
+        .question-title {
+            color: var(--text-primary);
+            font-weight: 600;
+            line-height: 1.4;
+            flex: 1;
+        }
+
+        .question-status {
+            padding: 0.25rem 0.75rem;
+            border-radius: 1rem;
+            font-size: 0.8rem;
+            font-weight: 600;
+            margin-left: 1rem;
+        }
+
+        .status-correct {
+            background: rgba(16, 185, 129, 0.2);
+            color: var(--success-color);
+        }
+
+        .status-incorrect {
+            background: rgba(239, 68, 68, 0.2);
+            color: var(--error-color);
+        }
+
+        .answer-comparison {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            margin: 1rem 0;
+        }
+
+        .answer-box {
+            padding: 1rem;
+            border-radius: 0.75rem;
+            border: 1px solid var(--border-color);
+        }
+
+        .answer-box.user-answer {
+            background: rgba(99, 102, 241, 0.1);
+            border-color: var(--primary-color);
+        }
+
+        .answer-box.correct-answer {
+            background: rgba(16, 185, 129, 0.1);
+            border-color: var(--success-color);
+        }
+
+        .answer-label {
+            font-size: 0.8rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .answer-text {
+            color: var(--text-primary);
+        }
+
+        .explanation {
+            background: rgba(6, 182, 212, 0.1);
+            border: 1px solid var(--info-color);
+            border-radius: 0.75rem;
+            padding: 1rem;
+            margin-top: 1rem;
+        }
+
+        .explanation-title {
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: var(--info-color);
+            margin-bottom: 0.5rem;
+        }
+
+        .explanation-text {
+            color: var(--text-secondary);
+            line-height: 1.5;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            margin-top: 3rem;
+        }
+
+        .btn {
+            padding: 1rem 2rem;
+            border: none;
+            border-radius: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 1rem;
+        }
+
+        .btn-primary {
+            background: var(--gradient-primary);
+            color: white;
+        }
+
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.1);
+            color: var(--text-primary);
+            border: 1px solid var(--border-color);
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+        }
+        
+        #page-loader {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: var(--bg-primary);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 3000;
+            transition: opacity 0.5s ease;
+        }
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 5px solid var(--border-color);
+            border-top: 5px solid var(--primary-color);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-bottom: 1rem;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        @media (max-width: 1024px) {
+            .analysis-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 1rem;
+            }
+
+            .header h1 {
+                font-size: 2rem;
+            }
+
+            .score-display {
+                font-size: 3rem;
+            }
+
+            .score-details {
+                flex-direction: column;
+                gap: 1rem;
+            }
+
+            .action-buttons {
+                flex-direction: column;
+            }
+
+             .answer-comparison {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* 動畫效果 */
+        .fade-in {
+            animation: fadeIn 0.6s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .slide-in {
+            animation: slideIn 0.8s ease-out;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateX(-30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="page-loader">
+        <div class="spinner"></div>
+        <p>正在載入分析報告...</p>
+    </div>
+
+    <div class="background-animation"></div>
+
+    <div class="container" id="mainContainer" style="display: none;">
+        <header class="header fade-in">
+            <h1>📊 測驗結果分析</h1>
+            <p>深入分析您的答題表現，發現學習重點與改進方向</p>
+        </header>
+
+        <div class="analysis-grid">
+            <div class="main-analysis">
+                <!-- 分數卡片 -->
+                <div class="score-card fade-in">
+                    <div class="chart-container">
+                        <canvas id="scoreChart"></canvas>
+                        <div class="score-display" id="scoreDisplay">...</div>
+                    </div>
+                    <div class="score-label" id="articleTitle">...</div>
+                    <div class="score-details">
+                        <div class="detail-item">
+                            <div class="detail-value" id="correctCount">...</div>
+                            <div class="detail-label">答對題數</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-value" id="totalQuestions">...</div>
+                            <div class="detail-label">總題數</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-value" id="completionTime">...</div>
+                            <div class="detail-label">完成時間</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-value" id="earnedPoints">...</div>
+                            <div class="detail-label">獲得分數</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="sidebar">
+                <!-- 成就卡片 -->
+                <div class="achievements-card slide-in">
+                    <h3 class="section-title">🏆 我的成就</h3>
+                    <div id="achievementsList">
+                        <!-- 成就項目將透過 JavaScript 動態生成 -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- 詳細分析 -->
+            <div class="detailed-analysis fade-in">
+                <div class="analysis-header">
+                    <h2 class="section-title">🔍 逐題詳細分析</h2>
+                </div>
+                <div class="analysis-content" id="detailedAnalysis">
+                    <!-- 詳細分析內容將透過 JavaScript 動態生成 -->
+                </div>
+            </div>
+        </div>
+
+        <!-- 操作按鈕 -->
+        <div class="action-buttons fade-in">
+            <button class="btn btn-primary" onclick="retakeTest()">
+                🔄 重新測驗
+            </button>
+            <button class="btn btn-secondary" onclick="shareResults()">
+                📤 分享結果
+            </button>
+            <a href="index.html" class="btn btn-secondary">
+                🏠 回到首頁
+            </a>
+        </div>
+    </div>
+
+    <script>
+        let db;
+        let analysisData = null;
+
+        const achievementList = {
+            first_test: { icon: '🌱', title: '初試啼聲', description: '完成您的第一次測驗！' },
+            perfect_score: { icon: '🎯', title: '完美主義者', description: '以 100% 的正確率完成測驗！' },
+            quick_learner: { icon: '⚡', title: '速讀高手', description: '在預估時間的一半內完成測驗！' },
+            persistent_tester_5: { icon: '🔥', title: '小試身手', description: '累計完成 5 次測驗！' },
+        };
+
+        // 頁面初始化
+        document.addEventListener('DOMContentLoaded', async function() {
+            const pageLoader = document.getElementById('page-loader');
+
+            if (!firebase.apps.length) {
+                pageLoader.innerHTML = `<div style="color: #ef4444; font-weight: bold;">❌ 設定錯誤</div><p style="text-align: center;">請在 firebase-config.js 檔案中填寫真實的 Firebase 設定。</p>`;
+                return;
+            }
+
+            try {
+                db = firebase.firestore();
+
+                const urlParams = new URLSearchParams(window.location.search);
+                const sessionId = urlParams.get('sessionId');
+
+                if (!sessionId) {
+                    throw new Error("URL 中缺少測驗 session ID。");
+                }
+                
+                analysisData = await loadAnalysisData(sessionId);
+                renderAnalysis(analysisData);
+                
+                document.getElementById('mainContainer').style.display = 'block';
+                pageLoader.style.opacity = '0';
+                setTimeout(() => pageLoader.style.display = 'none', 500);
+
+                animateElements();
+
+            } catch (error) {
+                console.error("載入分析失敗:", error);
+                 if (error.message.includes("index")) {
+                    pageLoader.innerHTML = `<div style="color: #ef4444; font-weight: bold;">❌ 載入失敗</div><p style="text-align: center;">資料庫需要建立複合索引。請按照設定指南操作。</p>`;
+                } else {
+                    pageLoader.innerHTML = `<div style="color: #ef4444; font-weight: bold;">❌ 載入失敗</div><p style="text-align: center;">${error.message}</p>`;
+                }
+            }
+        });
+
+        async function loadAnalysisData(sessionId) {
+            const sessionDoc = await db.collection('test-sessions').doc(sessionId).get();
+            if (!sessionDoc.exists) {
+                throw new Error("找不到指定的測驗記錄。");
+            }
+            const sessionData = sessionDoc.data();
+
+            const questionsSnapshot = await db.collection('questions')
+                .where('articleId', '==', sessionData.articleId)
+                .get();
+            
+            let questionsData = questionsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+            // Sort on the client-side to avoid needing a composite index
+            questionsData.sort((a, b) => (a.questionNumber || 0) - (b.questionNumber || 0));
+
+            const detailedAnswers = questionsData.map(q => {
+                const userAnswerData = sessionData.userAnswers.find(ua => ua.questionId === q.id);
+                const correctOptionIndex = q.options.findIndex(opt => opt.isCorrect);
+                
+                return {
+                    questionNumber: q.questionNumber,
+                    questionText: q.question,
+                    userAnswer: userAnswerData ? userAnswerData.userAnswerIndex : null,
+                    correctAnswer: correctOptionIndex,
+                    isCorrect: userAnswerData ? userAnswerData.isCorrect : false,
+                    options: q.options.map(opt => opt.text),
+                    explanation: q.explanation || "暫無解析",
+                };
+            });
+
+            // Fetch user's all achievements from leaderboard
+            const userDoc = await db.collection('leaderboard').doc(sessionData.userId).get();
+            const allUserAchievements = userDoc.exists ? (userDoc.data().achievements || []) : [];
+            
+            return {
+                articleId: sessionData.articleId,
+                nickname: sessionData.nickname,
+                articleTitle: sessionData.articleTitle,
+                score: sessionData.score,
+                correctCount: sessionData.correctCount,
+                totalQuestions: sessionData.totalQuestions,
+                completionTime: sessionData.completionTime,
+                earnedPoints: sessionData.score,
+                allAchievements: allUserAchievements,
+                newAchievements: sessionData.newAchievements || [],
+                answers: detailedAnswers,
+            };
+        }
+        
+        function renderAnalysis(results) {
+            document.title = `結果分析: ${results.articleTitle}`;
+            document.getElementById('scoreDisplay').textContent = results.score + '%';
+            document.getElementById('articleTitle').textContent = `「${results.articleTitle}」測驗結果`;
+            document.getElementById('correctCount').textContent = results.correctCount;
+            document.getElementById('totalQuestions').textContent = results.totalQuestions;
+            document.getElementById('completionTime').textContent = formatTime(results.completionTime);
+            document.getElementById('earnedPoints').textContent = '+' + results.earnedPoints;
+
+            renderScoreChart(results.correctCount, results.totalQuestions);
+            loadAchievements(results.allAchievements, results.newAchievements);
+            loadDetailedAnalysis(results.answers);
+        }
+
+        function renderScoreChart(correct, total) {
+            const ctx = document.getElementById('scoreChart').getContext('2d');
+            const incorrect = total - correct;
+            new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['答對', '答錯'],
+                    datasets: [{
+                        data: [correct, incorrect],
+                        backgroundColor: [
+                            'rgba(16, 185, 129, 0.8)', // success
+                            'rgba(239, 68, 68, 0.7)'   // error
+                        ],
+                        borderColor: [
+                            'rgba(16, 185, 129, 1)',
+                            'rgba(239, 68, 68, 1)'
+                        ],
+                        borderWidth: 2,
+                        hoverOffset: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    cutout: '80%',
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: { enabled: true }
+                    },
+                    animation: {
+                        animateRotate: true,
+                        animateScale: true
+                    }
+                }
+            });
+        }
+
+
+        function loadAchievements(allAchievements, newAchievements) {
+            const achievementsListEl = document.getElementById('achievementsList');
+            if (!allAchievements || allAchievements.length === 0) {
+                achievementsListEl.innerHTML = '<p style="color: var(--text-muted); text-align: center;">暫無成就，繼續努力！</p>';
+                return;
+            }
+            achievementsListEl.innerHTML = allAchievements.map(id => {
+                const achievement = achievementList[id];
+                if (!achievement) return '';
+
+                const isNew = newAchievements.includes(id);
+                return `
+                <div class="achievement-item ${isNew ? 'new-achievement' : ''}">
+                    <div class="achievement-icon">${achievement.icon}</div>
+                    <div class="achievement-info">
+                        <h4>${achievement.title}</h4>
+                        <p>${achievement.description}</p>
+                    </div>
+                </div>
+                `
+            }).join('');
+        }
+        
+        function loadDetailedAnalysis(answers) {
+            const detailedAnalysis = document.getElementById('detailedAnalysis');
+            detailedAnalysis.innerHTML = answers.map(answer => `
+                <div class="question-analysis ${answer.isCorrect ? 'correct' : 'incorrect'}">
+                    <div class="question-header">
+                        <div class="question-title">
+                            第 ${answer.questionNumber} 題: ${answer.questionText}
+                        </div>
+                        <div class="question-status ${answer.isCorrect ? 'status-correct' : 'status-incorrect'}">
+                            ${answer.isCorrect ? '正確' : '錯誤'}
+                        </div>
+                    </div>
+                    <div class="answer-comparison">
+                        <div class="answer-box user-answer">
+                            <div class="answer-label" style="color: var(--primary-color);">您的答案</div>
+                            <div class="answer-text">${answer.userAnswer !== null ? answer.options[answer.userAnswer] : '未作答'}</div>
+                        </div>
+                        <div class="answer-box correct-answer">
+                            <div class="answer-label" style="color: var(--success-color);">正確答案</div>
+                            <div class="answer-text">${answer.options[answer.correctAnswer]}</div>
+                        </div>
+                    </div>
+                    <div class="explanation">
+                        <div class="explanation-title">💡 詳細解析</div>
+                        <div class="explanation-text">${answer.explanation}</div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function formatTime(seconds) {
+            if (typeof seconds !== 'number' || isNaN(seconds)) return 'N/A';
+            const minutes = Math.floor(seconds / 60);
+            const remainingSeconds = seconds % 60;
+            return minutes + ':' + remainingSeconds.toString().padStart(2, '0');
+        }
+        
+        function animateElements() {
+             document.querySelectorAll('.fade-in, .slide-in').forEach(el => el.style.animation = 'none');
+             setTimeout(() => {
+                document.querySelectorAll('.fade-in').forEach(el => el.style.animation = 'fadeIn 0.6s ease-out forwards');
+                document.querySelectorAll('.slide-in').forEach(el => el.style.animation = 'slideIn 0.8s ease-out forwards');
+             }, 10);
+        }
+
+        function retakeTest() {
+            if (!analysisData) return;
+            window.location.href = `test.html?articleId=${analysisData.articleId}`;
+        }
+
+        function shareResults() {
+            if (!analysisData) return;
+            const shareData = {
+                title: `我在 English Reading Hub 獲得了 ${analysisData.score}% 的成績！`,
+                text: `我剛完成了「${analysisData.articleTitle}」的英文閱讀測驗，獲得 ${analysisData.score}% 的好成績！一起來挑戰吧！`,
+                url: window.location.href
+            };
+
+            if (navigator.share) {
+                navigator.share(shareData)
+                    .then(() => console.log('分享成功'))
+                    .catch((error) => console.log('分享失敗', error));
+            } else {
+                navigator.clipboard.writeText(window.location.href).then(() => {
+                    showNotification('分享連結已複製到剪貼板！');
+                }).catch(() => {
+                    alert('複製失敗，請手動複製連結。');
+                });
+            }
+        }
+
+        function showNotification(message) {
+            const notification = document.createElement('div');
+            notification.style.cssText = `
+                position: fixed; top: 2rem; right: 2rem;
+                padding: 1rem 1.5rem; color: white;
+                background: var(--gradient-success);
+                border-radius: 1rem; z-index: 2000;
+                animation: slideInRight 0.3s ease-out;
+            `;
+            notification.textContent = message;
+            document.body.appendChild(notification);
+            setTimeout(() => {
+                if (document.body.contains(notification)) {
+                    document.body.removeChild(notification);
+                }
+            }, 3000);
+        }
+    </script>
+</body>
+</html>

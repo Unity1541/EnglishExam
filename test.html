@@ -1,0 +1,697 @@
+
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>English Reading Test</title>
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+    <!-- Central Firebase Config -->
+    <script src="firebase-config.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Noto+Sans+TC:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        :root {
+            --primary-color: #6366f1;
+            --success-color: #10b981;
+            --error-color: #ef4444;
+            --bg-primary: #0f0f1e;
+        }
+
+        body { 
+            font-family: 'Inter', 'Noto Sans TC', sans-serif; 
+            background: var(--bg-primary); 
+            color: white; 
+            line-height: 1.6;
+        }
+        
+        .container { 
+            max-width: 1400px; 
+            margin: 0 auto; 
+            padding: 2rem; 
+        }
+        
+        .header { 
+            text-align: center; 
+            margin-bottom: 2rem; 
+            padding: 2rem;
+            background: rgba(255,255,255,0.05);
+            border-radius: 1rem;
+        }
+        
+        .timer { 
+            font-size: 2rem; 
+            font-weight: bold; 
+            color: #fbbf24; 
+            margin-bottom: 1rem;
+            padding: 1rem 2rem;
+            background: rgba(251, 191, 36, 0.1);
+            border-radius: 2rem;
+            display: inline-block;
+        }
+        
+        .test-info {
+            display: flex;
+            justify-content: center;
+            gap: 2rem;
+            margin-top: 1rem;
+            flex-wrap: wrap;
+        }
+        
+        .info-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: #cbd5e1;
+        }
+        
+        .content { 
+            display: grid; 
+            grid-template-columns: 1fr 1fr; 
+            gap: 2rem; 
+            margin-bottom: 2rem;
+        }
+        
+        .card { 
+            background: rgba(255,255,255,0.05); 
+            padding: 2rem; 
+            border-radius: 1.5rem; 
+            border: 1px solid rgba(255,255,255,0.1);
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .article-wrapper {
+            max-height: 70vh;
+            overflow-y: auto;
+            padding-right: 1rem;
+        }
+
+        .article h3 { 
+            color: #fbbf24; 
+            margin-bottom: 1.5rem; 
+            font-size: 1.5rem;
+            text-align: center;
+        }
+        
+        .article p { 
+            margin-bottom: 1rem; 
+            line-height: 1.8; 
+            font-size: 1.1rem;
+            text-align: justify;
+        }
+        
+        .question { 
+            margin-bottom: 2rem; 
+        }
+        
+        .question h4 { 
+            margin-bottom: 1.5rem; 
+            font-size: 1.3rem; 
+            line-height: 1.4;
+            color: #e2e8f0;
+        }
+        
+        .question-number {
+            color: #6366f1;
+            font-weight: bold;
+        }
+        
+        .option { 
+            display: flex; 
+            align-items: center; 
+            gap: 1rem; 
+            padding: 1.2rem; 
+            margin: 0.75rem 0; 
+            background: rgba(255,255,255,0.02); 
+            border: 2px solid rgba(255,255,255,0.1); 
+            border-radius: 1rem; 
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .option:hover { 
+            border-color: #6366f1; 
+            background: rgba(99,102,241,0.1); 
+            transform: translateX(5px);
+        }
+        
+        .option.selected { 
+            border-color: #6366f1; 
+            background: linear-gradient(135deg, rgba(99,102,241,0.2), rgba(139,92,246,0.2)); 
+        }
+        
+        .option-letter { 
+            width: 2.5rem; 
+            height: 2.5rem; 
+            background: rgba(255,255,255,0.1); 
+            border-radius: 50%; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            font-weight: bold; 
+            flex-shrink: 0;
+        }
+        
+        .option.selected .option-letter { 
+            background: linear-gradient(135deg, #6366f1, #8b5cf6); 
+            color: white; 
+        }
+        
+        .nav-section {
+            background: rgba(255,255,255,0.05);
+            border-radius: 1rem;
+            padding: 1.5rem;
+        }
+        
+        .nav-buttons { 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+        
+        .btn { 
+            padding: 1rem 2rem; 
+            background: linear-gradient(135deg, #6366f1, #8b5cf6); 
+            border: none; 
+            border-radius: 0.75rem; 
+            color: white; 
+            font-weight: bold; 
+            cursor: pointer; 
+            font-size: 1rem;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+        
+        .btn:disabled { 
+            opacity: 0.5; 
+            cursor: not-allowed; 
+        }
+        
+        .btn:hover:not(:disabled) { 
+            transform: translateY(-2px); 
+            box-shadow: 0 8px 32px rgba(99,102,241,0.3);
+        }
+        
+        .btn.submit-btn {
+            background: linear-gradient(135deg, #10b981, #059669);
+        }
+        
+        .progress-info {
+            text-align: center;
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: #fbbf24;
+        }
+        
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 4px;
+            overflow: hidden;
+            margin-top: 1rem;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(135deg, #6366f1, #8b5cf6);
+            border-radius: 4px;
+            transition: width 0.3s ease;
+        }
+        
+        .modal {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.8);
+            backdrop-filter: blur(10px);
+            display: flex; align-items: center; justify-content: center;
+            z-index: 2000;
+            opacity: 0; visibility: hidden;
+            transition: opacity 0.3s ease;
+        }
+        .modal.show { opacity: 1; visibility: visible; }
+        
+        .modal-content {
+            background: #1a1a2e; 
+            padding: 2rem; 
+            border-radius: 1.5rem; 
+            text-align: center; 
+            max-width: 500px; 
+            width: 90%;
+            border: 1px solid rgba(255,255,255,0.1);
+            transform: scale(0.9);
+            transition: transform 0.3s ease;
+        }
+        .modal.show .modal-content { transform: scale(1); }
+
+        .modal-title { font-size: 1.5rem; font-weight: 600; margin-bottom: 1rem; }
+        .modal-text { color: #cbd5e1; margin-bottom: 2rem; }
+        .modal-footer { display: flex; gap: 1rem; justify-content: center; }
+
+        .results { display: none; }
+        .results.show { display: flex; }
+        
+        .results-content { 
+            padding: 3rem;
+        }
+        
+        .results-icon { font-size: 4rem; margin-bottom: 1rem; }
+        .score { 
+            font-size: 4rem; 
+            font-weight: bold;
+            margin: 1rem 0; 
+            background: linear-gradient(135deg, var(--success-color), #059669);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .grade { font-size: 1.5rem; margin-bottom: 1rem; color: #fbbf24; }
+        .results-details {
+            margin: 2rem 0; padding: 1.5rem;
+            background: rgba(255,255,255,0.05); border-radius: 1rem;
+        }
+        .detail-row { display: flex; justify-content: space-between; margin: 0.5rem 0; font-size: 1.1rem; }
+        .answer-review {
+            margin-top: 2rem; text-align: left;
+            max-height: 200px; overflow-y: auto; padding-right: 1rem;
+        }
+        .answer-item {
+            margin: 1rem 0; padding: 1rem;
+            background: rgba(255,255,255,0.02); border-radius: 0.5rem;
+            border-left: 4px solid;
+        }
+        .answer-item.correct { border-left-color: var(--success-color); }
+        .answer-item.incorrect { border-left-color: var(--error-color); }
+        .answer-question { font-weight: 600; margin-bottom: 0.5rem; color: #e2e8f0; }
+        .answer-result { font-size: 0.9rem; color: #94a3b8; }
+        .answer-explanation {
+            margin-top: 0.5rem; padding: 0.5rem;
+            background: rgba(255,255,255,0.03); border-radius: 0.25rem;
+            font-size: 0.9rem; color: #cbd5e1;
+        }
+        
+        .loading {
+            display: inline-block; width: 1rem; height: 1rem;
+            border: 2px solid rgba(255, 255, 255, 0.3); border-top: 2px solid white;
+            border-radius: 50%; animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+        @media (max-width: 1024px) {
+            .content { grid-template-columns: 1fr; }
+            .article-wrapper { max-height: 50vh; }
+        }
+        
+        @media (max-width: 768px) {
+            .container { padding: 1rem; }
+            .results-content { padding: 2rem; margin: 1rem; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div id="loading" style="text-align:center; padding: 4rem;">
+            <div id="loading-content">
+                <h2>載入測驗中，請稍候...</h2>
+            </div>
+        </div>
+
+        <div id="test-wrapper" style="display: none;">
+            <div class="header">
+                <h1>📚 English Reading Test</h1>
+                <div class="timer" id="timer">⏱️ ...</div>
+                <div class="test-info">
+                    <div class="info-item"><span>👤 測驗者: <span id="studentName"></span></span></div>
+                    <div class="info-item"><span>📖 文章: <span id="articleTitle"></span></span></div>
+                    <div class="info-item"><span>📝 題數: <span id="totalQuestions"></span></span></div>
+                    <div class="info-item"><span>⚡ 難度: <span id="difficulty"></span></span></div>
+                </div>
+            </div>
+            
+            <div class="content" id="testContent">
+                <div class="card"><div class="article-wrapper"><div class="article"><h3 id="articleTitleInContent"></h3><div id="articleContent"></div></div></div></div>
+                <div class="card"><div class="question" id="question-container"></div></div>
+            </div>
+            
+            <div class="nav-section" id="navSection">
+                <div class="nav-buttons">
+                    <button class="btn" id="prev-btn" disabled>← 上一題</button>
+                    <div class="progress-info" id="progress">...</div>
+                    <button class="btn" id="next-btn">下一題 →</button>
+                </div>
+                <div class="progress-bar"><div class="progress-fill" id="progress-fill"></div></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal results" id="results">
+        <div class="modal-content results-content">
+            <!-- Results content generated by JS -->
+        </div>
+    </div>
+    
+    <div class="modal" id="confirmationModal">
+        <div class="modal-content">
+            <h2 class="modal-title" id="confirmationTitle">請確認</h2>
+            <p class="modal-text" id="confirmationMessage">您還有題目未作答，確定要提交嗎？</p>
+            <div class="modal-footer">
+                <button id="cancelSubmitBtn" class="btn" style="background: rgba(255,255,255,0.1);">返回作答</button>
+                <button id="confirmSubmitBtn" class="btn submit-btn">確定提交</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const state = {
+            db: null, auth: null,
+            currentUser: null,
+            articleData: null,
+            questions: [],
+            currentQuestionIndex: 0,
+            answers: {},
+            timerInterval: null,
+            startTime: null
+        };
+
+        const achievementList = {
+            first_test: { icon: '🌱', title: '初試啼聲', description: '完成您的第一次測驗！' },
+            perfect_score: { icon: '🎯', title: '完美主義者', description: '以 100% 的正確率完成測驗！' },
+            quick_learner: { icon: '⚡', title: '速讀高手', description: '在預估時間的一半內完成測驗！' },
+            persistent_tester_5: { icon: '🔥', title: '小試身手', description: '累計完成 5 次測驗！' },
+        };
+
+        const ui = {
+            loadingEl: document.getElementById('loading'),
+            loadingContentEl: document.getElementById('loading-content'),
+            testWrapperEl: document.getElementById('test-wrapper'),
+            
+            showError(message, details = '') {
+                this.loadingEl.style.display = 'block';
+                this.testWrapperEl.style.display = 'none';
+                this.loadingContentEl.innerHTML = `
+                    <h2 style="color: var(--error-color);">❌ ${message}</h2>
+                    <p>${details}</p>`;
+            },
+            
+            renderTestInfo() {
+                const { articleData, questions } = state;
+                document.getElementById('articleTitle').textContent = articleData.title;
+                document.getElementById('totalQuestions').textContent = questions.length;
+                document.getElementById('difficulty').textContent = articleData.difficulty;
+                document.getElementById('articleTitleInContent').textContent = articleData.title;
+                document.getElementById('articleContent').innerHTML = articleData.content.split('\n').map(p => `<p>${p}</p>`).join('');
+            },
+
+            renderQuestion() {
+                const { questions, currentQuestionIndex, answers } = state;
+                const question = questions[currentQuestionIndex];
+                const container = document.getElementById('question-container');
+                container.innerHTML = `
+                    <h4><span class="question-number">第 ${currentQuestionIndex + 1} 題:</span> ${question.question}</h4>
+                    <div class="options">${question.options.map((option, index) => `
+                        <div class="option" data-value="${index}">
+                            <div class="option-letter">${String.fromCharCode(65 + index)}</div>
+                            <div>${option.text}</div>
+                        </div>`).join('')}
+                    </div>`;
+                
+                if (answers[currentQuestionIndex] !== undefined) {
+                    container.querySelector(`.option[data-value="${answers[currentQuestionIndex]}"]`).classList.add('selected');
+                }
+            },
+            
+            updateNavigation() {
+                const { currentQuestionIndex, questions } = state;
+                document.getElementById('prev-btn').disabled = currentQuestionIndex === 0;
+                const nextBtn = document.getElementById('next-btn');
+                
+                if (currentQuestionIndex === questions.length - 1) {
+                    nextBtn.textContent = '🏁 提交測驗';
+                    nextBtn.className = 'btn submit-btn';
+                } else {
+                    nextBtn.textContent = '下一題 →';
+                    nextBtn.className = 'btn';
+                }
+            },
+
+            updateProgress() {
+                const { currentQuestionIndex, questions } = state;
+                const progress = (currentQuestionIndex + 1) / questions.length * 100;
+                document.getElementById('progress-fill').style.width = `${progress}%`;
+                document.getElementById('progress').textContent = `${currentQuestionIndex + 1} / ${questions.length}`;
+            },
+            
+            showModal(id) { document.getElementById(id).classList.add('show'); },
+            closeModal(id) { document.getElementById(id).classList.remove('show'); }
+        };
+
+        const handlers = {
+            async init() {
+                if (!firebase.apps.length) {
+                    return ui.showError('設定錯誤', '請在 firebase-config.js 檔案中填寫真實的 Firebase 設定。');
+                }
+                
+                try {
+                    state.db = firebase.firestore();
+                    state.auth = firebase.auth();
+                    await this.handleAuthentication();
+                    await this.loadTestData();
+                    this.startTest();
+                } catch(error) {
+                    console.error("Initialization failed:", error);
+                     if (error.message.includes("index")) {
+                        ui.showError('資料庫需要建立索引', `請按照 firebase_setup_guide.md 中的指示建立索引。`);
+                    } else {
+                        ui.showError('載入測驗失敗', error.message);
+                    }
+                }
+            },
+
+            async handleAuthentication() {
+                return new Promise((resolve, reject) => {
+                    const timeout = setTimeout(() => reject(new Error('連線逾時，請檢查網路或 Firebase 設定。')), 15000);
+                    state.auth.onAuthStateChanged(async user => {
+                        clearTimeout(timeout);
+                        if (user) {
+                            state.currentUser = user;
+                            resolve();
+                        } else {
+                            try {
+                                const userCredential = await state.auth.signInAnonymously();
+                                state.currentUser = userCredential.user;
+                                resolve();
+                            } catch (e) {
+                                reject(new Error('匿名登入失敗，請確認 Firebase 已啟用此功能。'));
+                            }
+                        }
+                    });
+                });
+            },
+            
+            async loadTestData() {
+                const articleId = new URLSearchParams(window.location.search).get('articleId');
+                if (!articleId) throw new Error('URL 中缺少文章 ID。');
+
+                const articleDoc = await state.db.collection('articles').doc(articleId).get();
+                if (!articleDoc.exists) throw new Error('找不到指定的文章。');
+                state.articleData = { id: articleDoc.id, ...articleDoc.data() };
+                
+                const questionsSnapshot = await state.db.collection('questions').where('articleId', '==', articleId).get();
+                if (questionsSnapshot.empty) throw new Error('此文章尚無題目。');
+                
+                const questions = questionsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                // Sort on the client-side to avoid needing a composite index
+                questions.sort((a, b) => (a.questionNumber || 0) - (b.questionNumber || 0));
+                state.questions = questions;
+
+
+                const userDoc = await state.db.collection('leaderboard').doc(state.currentUser.uid).get();
+                document.getElementById('studentName').textContent = userDoc.exists ? userDoc.data().nickname : '學習者';
+            },
+            
+            startTest() {
+                ui.loadingEl.style.display = 'none';
+                ui.testWrapperEl.style.display = 'block';
+                ui.renderTestInfo();
+                ui.renderQuestion();
+                ui.updateNavigation();
+                ui.updateProgress();
+                this.startTimer();
+                this.setupEventListeners();
+            },
+            
+            setupEventListeners() {
+                document.getElementById('prev-btn').addEventListener('click', () => this.navigateQuestion(-1));
+                document.getElementById('next-btn').addEventListener('click', () => this.navigateQuestion(1));
+                document.getElementById('question-container').addEventListener('click', e => {
+                    const optionEl = e.target.closest('.option');
+                    if (optionEl) {
+                        const answerIndex = parseInt(optionEl.dataset.value);
+                        state.answers[state.currentQuestionIndex] = answerIndex;
+                        document.querySelectorAll('#question-container .option').forEach(opt => opt.classList.remove('selected'));
+                        optionEl.classList.add('selected');
+                    }
+                });
+                document.getElementById('cancelSubmitBtn').addEventListener('click', () => ui.closeModal('confirmationModal'));
+                document.getElementById('confirmSubmitBtn').addEventListener('click', () => {
+                    ui.closeModal('confirmationModal');
+                    this.finalizeTest();
+                });
+            },
+            
+            navigateQuestion(direction) {
+                if (direction === 1 && state.currentQuestionIndex === state.questions.length - 1) {
+                    this.handleSubmitAttempt();
+                    return;
+                }
+                
+                const newIndex = state.currentQuestionIndex + direction;
+                if (newIndex >= 0 && newIndex < state.questions.length) {
+                    state.currentQuestionIndex = newIndex;
+                    ui.renderQuestion();
+                    ui.updateNavigation();
+                    ui.updateProgress();
+                }
+            },
+            
+            handleSubmitAttempt() {
+                const unanswered = Object.keys(state.answers).length < state.questions.length;
+                if(unanswered) {
+                    ui.showModal('confirmationModal');
+                } else {
+                    this.finalizeTest();
+                }
+            },
+            
+            async finalizeTest() {
+                clearInterval(state.timerInterval);
+                const nextBtn = document.getElementById('next-btn');
+                nextBtn.disabled = true;
+                nextBtn.innerHTML = '<span class="loading"></span> 提交中';
+
+                let correctCount = 0;
+                state.questions.forEach((q, i) => {
+                    if (state.answers[i] !== undefined && q.options[state.answers[i]].isCorrect) {
+                        correctCount++;
+                    }
+                });
+                
+                const score = Math.round((correctCount / state.questions.length) * 100);
+                const completionTime = Math.floor((Date.now() - state.startTime) / 1000);
+                
+                await this.saveResults(score, correctCount, completionTime);
+            },
+
+            async saveResults(score, correctCount, time) {
+                const userRef = state.db.collection('leaderboard').doc(state.currentUser.uid);
+                const sessionRef = state.db.collection('test-sessions').doc();
+
+                try {
+                    const userDoc = await userRef.get();
+                    if (!userDoc.exists) throw new Error("找不到用戶資料，無法儲存分數。");
+                    
+                    const oldData = userDoc.data();
+                    const newAchievements = this.checkAchievements(oldData, score, time);
+                    
+                    const userAnswersForDb = state.questions.map((q, i) => ({
+                        questionId: q.id,
+                        userAnswerIndex: state.answers[i] ?? null,
+                        isCorrect: state.answers[i] !== undefined && q.options[state.answers[i]].isCorrect,
+                    }));
+
+                    await state.db.runTransaction(async t => {
+                        t.update(userRef, {
+                            totalScore: firebase.firestore.FieldValue.increment(score),
+                            testsCompleted: firebase.firestore.FieldValue.increment(1),
+                            achievements: firebase.firestore.FieldValue.arrayUnion(...newAchievements)
+                        });
+                        t.set(sessionRef, {
+                            userId: state.currentUser.uid, nickname: oldData.nickname, articleId: state.articleData.id,
+                            articleTitle: state.articleData.title, score, correctCount, totalQuestions: state.questions.length,
+                            completionTime: time, userAnswers: userAnswersForDb, newAchievements,
+                            timestamp: firebase.firestore.FieldValue.serverTimestamp()
+                        });
+                    });
+                    this.showResults(score, correctCount, time, sessionRef.id, newAchievements);
+                } catch(error) {
+                    console.error("儲存測驗結果失敗:", error);
+                    this.showResults(score, correctCount, time, null, []); // Show results anyway
+                }
+            },
+
+            checkAchievements(userData, score, time) {
+                const newAchievements = [];
+                if ((userData.testsCompleted || 0) === 0) newAchievements.push('first_test');
+                if (score === 100) newAchievements.push('perfect_score');
+                if (time < (state.articleData.estimatedReadingTime * 60) / 2) newAchievements.push('quick_learner');
+                if ((userData.testsCompleted || 0) + 1 === 5) newAchievements.push('persistent_tester_5');
+                return newAchievements.filter(ach => !(userData.achievements || []).includes(ach));
+            },
+            
+            showResults(score, correctCount, time, sessionId, newAchievements) {
+                const resultsEl = document.getElementById('results');
+                const gradeText = score >= 90 ? '優異表現！' : (score >= 70 ? '良好表現！' : '繼續加油！');
+                const icon = score >= 90 ? '🏆' : (score >= 70 ? '🎉' : '💪');
+
+                let reviewHTML = `<div class="results-icon">${icon}</div><h2>測驗完成！</h2><div class="score">${score}%</div><div class="grade">${gradeText}</div>
+                    <div class="results-details">
+                        <div class="detail-row"><span>答對題數:</span><span>${correctCount} / ${state.questions.length}</span></div>
+                        <div class="detail-row"><span>完成時間:</span><span>${this.formatTime(time)}</span></div>
+                        <div class="detail-row"><span>獲得分數:</span><span>+${score} 分</span></div>
+                    </div><div class="answer-review">`;
+                
+                if (newAchievements.length > 0) {
+                    reviewHTML += `<div style="background:rgba(251,191,36,0.1);padding:1rem;border-radius:1rem;margin-bottom:1rem;"><h4 style="color:#fbbf24;">🎉 新成就解鎖！</h4>${newAchievements.map(id => `<p>${achievementList[id].icon} ${achievementList[id].title}</p>`).join('')}</div>`;
+                }
+                
+                reviewHTML += state.questions.map((q, i) => {
+                    const userAnswerIndex = state.answers[i];
+                    const correctOptionIndex = q.options.findIndex(opt => opt.isCorrect);
+                    const isCorrect = userAnswerIndex === correctOptionIndex;
+                    return `<div class="answer-item ${isCorrect ? 'correct' : 'incorrect'}">
+                        <div class="answer-question">第 ${i + 1} 題: ${q.question}</div>
+                        <div class="answer-result"><strong>您的答案:</strong> ${userAnswerIndex !== undefined ? q.options[userAnswerIndex].text : '未作答'} ${isCorrect ? '✅' : '❌'}</div>
+                        ${!isCorrect ? `<div class="answer-result"><strong>正確答案:</strong> ${q.options[correctOptionIndex].text}</div>` : ''}
+                        <div class="answer-explanation"><strong>解析:</strong> ${q.explanation}</div></div>`;
+                }).join('') + `</div><div style="display:flex;gap:1rem;justify-content:center;margin-top:2rem;">
+                    <a href="index.html" class="btn" style="background: rgba(255,255,255,0.1);">🏠 回到首頁</a>
+                    ${sessionId ? `<a href="test_result_analyzer.html?sessionId=${sessionId}" target="_blank" class="btn">查看詳細分析</a>` : ''}
+                </div>`;
+                
+                resultsEl.querySelector('.results-content').innerHTML = reviewHTML;
+                resultsEl.classList.add('show');
+            },
+
+            startTimer() {
+                let timeRemaining = state.articleData.estimatedReadingTime * 60;
+                state.startTime = Date.now();
+                const timerEl = document.getElementById('timer');
+                const update = () => {
+                    const minutes = Math.floor(timeRemaining / 60).toString().padStart(2, '0');
+                    const seconds = (timeRemaining % 60).toString().padStart(2, '0');
+                    timerEl.textContent = `⏱️ ${minutes}:${seconds}`;
+                    if (timeRemaining-- <= 0) {
+                        clearInterval(state.timerInterval);
+                        this.finalizeTest();
+                    }
+                };
+                update();
+                state.timerInterval = setInterval(update, 1000);
+            },
+            
+            formatTime: seconds => `${Math.floor(seconds / 60)}:${(seconds % 60).toString().padStart(2, '0')}`
+        };
+
+        document.addEventListener('DOMContentLoaded', () => handlers.init());
+    </script>
+</body>
+</html>

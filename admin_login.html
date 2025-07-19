@@ -1,0 +1,517 @@
+
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>管理員登入 - English Reading Hub</title>
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+    <!-- Central Firebase Config -->
+    <script src="firebase-config.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Noto+Sans+TC:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary-color: #6366f1;
+            --primary-dark: #4f46e5;
+            --success-color: #10b981;
+            --error-color: #ef4444;
+            --warning-color: #f59e0b;
+            
+            --bg-primary: #0f0f1e;
+            --bg-secondary: #1a1a2e;
+            --bg-card: rgba(255, 255, 255, 0.05);
+            --bg-glass: rgba(255, 255, 255, 0.1);
+            
+            --text-primary: #ffffff;
+            --text-secondary: #cbd5e1;
+            --text-muted: #94a3b8;
+            
+            --border-color: rgba(255, 255, 255, 0.1);
+            --shadow-soft: 0 4px 20px rgba(0, 0, 0, 0.15);
+            --shadow-medium: 0 8px 32px rgba(0, 0, 0, 0.2);
+            --shadow-strong: 0 16px 64px rgba(0, 0, 0, 0.3);
+            
+            --gradient-primary: linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #ec4899 100%);
+            --gradient-secondary: linear-gradient(135deg, #f59e0b 0%, #f97316 100%);
+        }
+
+        body {
+            font-family: 'Inter', 'Noto Sans TC', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* 動態背景 */
+        .background-animation {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            background: 
+                radial-gradient(circle at 20% 80%, rgba(99, 102, 241, 0.2) 0%, transparent 50%),
+                radial-gradient(circle at 80% 20%, rgba(236, 72, 153, 0.2) 0%, transparent 50%),
+                radial-gradient(circle at 40% 40%, rgba(6, 182, 212, 0.15) 0%, transparent 50%);
+            animation: backgroundFloat 15s ease-in-out infinite;
+        }
+
+        @keyframes backgroundFloat {
+            0%, 100% { transform: translateY(0px) rotate(0deg); opacity: 0.8; }
+            33% { transform: translateY(-30px) rotate(2deg); opacity: 1; }
+            66% { transform: translateY(15px) rotate(-2deg); opacity: 0.9; }
+        }
+
+        /* 主登入容器 */
+        .login-container {
+            width: 100%;
+            max-width: 450px;
+            padding: 2rem;
+            animation: slideInUp 0.8s ease-out;
+        }
+
+        @keyframes slideInUp {
+            from {
+                opacity: 0;
+                transform: translateY(50px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .login-card {
+            background: var(--bg-card);
+            backdrop-filter: blur(20px);
+            border-radius: 2rem;
+            padding: 3rem;
+            border: 1px solid var(--border-color);
+            box-shadow: var(--shadow-strong);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .login-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: var(--gradient-primary);
+        }
+
+        .logo-section {
+            text-align: center;
+            margin-bottom: 2.5rem;
+        }
+
+        .logo-icon {
+            width: 4rem;
+            height: 4rem;
+            background: var(--gradient-primary);
+            border-radius: 1.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 1.5rem;
+            font-size: 2rem;
+        }
+
+        .logo-title {
+            font-size: 1.8rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+
+        .logo-subtitle {
+            color: var(--text-secondary);
+            font-size: 0.95rem;
+        }
+
+        .login-form {
+            margin-bottom: 1rem;
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            font-size: 0.9rem;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 1rem 1.25rem;
+            background: rgba(255, 255, 255, 0.05);
+            border: 2px solid var(--border-color);
+            border-radius: 1rem;
+            color: var(--text-primary);
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            background: rgba(255, 255, 255, 0.08);
+            box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1);
+        }
+        
+        .form-input:disabled {
+            background-color: rgba(255, 255, 255, 0.02);
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .form-options {
+            display: flex;
+            justify-content: flex-end;
+            margin-bottom: 2rem;
+        }
+
+        .forgot-password {
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 0.875rem;
+            transition: color 0.3s ease;
+            cursor: pointer;
+        }
+
+        .forgot-password:hover {
+            color: var(--primary-color);
+        }
+
+        .login-button {
+            width: 100%;
+            padding: 1rem 1.5rem;
+            background: var(--gradient-primary);
+            border: none;
+            border-radius: 1rem;
+            color: white;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .login-button:hover {
+            transform: translateY(-2px);
+        }
+        
+        .login-button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none !important;
+        }
+
+        .button-content {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+
+        .loading-spinner {
+            width: 1rem;
+            height: 1rem;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-top: 2px solid white;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .message-box {
+            border-radius: 1rem;
+            padding: 1rem;
+            margin-top: 1.5rem;
+            display: none;
+        }
+        
+        .message-box.error {
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid rgba(239, 68, 68, 0.2);
+            color: var(--error-color);
+        }
+        
+        .message-box.success {
+            background: rgba(16, 185, 129, 0.1);
+            border: 1px solid rgba(16, 185, 129, 0.2);
+            color: var(--success-color);
+        }
+        
+        .bottom-links {
+            text-align: center;
+            margin-top: 2rem;
+            padding-top: 2rem;
+            border-top: 1px solid var(--border-color);
+        }
+
+        .back-to-home {
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 0.875rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            transition: color 0.3s ease;
+        }
+
+        .back-to-home:hover {
+            color: var(--primary-color);
+        }
+        
+        /* Modal */
+        .modal {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.8);
+            backdrop-filter: blur(10px);
+            display: flex; align-items: center; justify-content: center;
+            z-index: 1000;
+            opacity: 0; visibility: hidden;
+            transition: all 0.3s ease;
+        }
+        .modal.show { opacity: 1; visibility: visible; }
+
+        .modal-content {
+            background: var(--bg-secondary);
+            border-radius: 1.5rem;
+            border: 1px solid var(--border-color);
+            padding: 2.5rem;
+            max-width: 450px;
+            width: 90%;
+            transform: scale(0.9);
+            transition: transform 0.3s ease;
+        }
+        .modal.show .modal-content { transform: scale(1); }
+
+        .modal-header {
+            display: flex; justify-content: space-between; align-items: center;
+            margin-bottom: 1.5rem;
+        }
+        .modal-title { font-size: 1.5rem; font-weight: 600; }
+
+        .modal-close {
+            background: none; border: none; color: var(--text-muted);
+            font-size: 1.8rem; cursor: pointer;
+        }
+        .modal-close:hover { color: var(--text-primary); }
+    </style>
+</head>
+<body>
+    <div class="background-animation"></div>
+    <div class="login-container">
+        <div class="login-card">
+            <div class="logo-section">
+                <div class="logo-icon">🔐</div>
+                <h1 class="logo-title">管理員登入</h1>
+                <p class="logo-subtitle">English Reading Hub 後台管理系統</p>
+            </div>
+
+            <form class="login-form" id="loginForm">
+                <div class="form-group">
+                    <label class="form-label">管理員帳號</label>
+                    <input type="email" class="form-input" id="email" required 
+                           placeholder="admin@englishhub.com" autocomplete="username">
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">密碼</label>
+                    <input type="password" class="form-input" id="password" required 
+                           placeholder="請輸入管理員密碼" autocomplete="current-password">
+                </div>
+
+                <div class="form-options">
+                    <a class="forgot-password" onclick="showPasswordResetModal()">忘記密碼？</a>
+                </div>
+
+                <button type="submit" class="login-button" id="loginButton">
+                    <div class="button-content">
+                        <span id="loginButtonText">登入管理系統</span>
+                        <div class="loading-spinner" id="loginSpinner" style="display: none;"></div>
+                    </div>
+                </button>
+            </form>
+            
+            <div class="message-box" id="messageBox"></div>
+
+            <div class="bottom-links">
+                <a href="index.html" class="back-to-home">
+                    <span>←</span> 回到首頁
+                </a>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 密碼重設 Modal -->
+    <div class="modal" id="passwordResetModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title">重設密碼</h2>
+                <button class="modal-close" onclick="closeModal('passwordResetModal')">&times;</button>
+            </div>
+            <p style="color: var(--text-secondary); margin-bottom: 1.5rem;">請輸入您的管理員電子郵件，我們將發送一封密碼重設郵件給您。</p>
+            <form id="passwordResetForm">
+                 <div class="form-group">
+                    <label class="form-label">電子郵件</label>
+                    <input type="email" class="form-input" id="resetEmail" required placeholder="admin@englishhub.com">
+                </div>
+                <button type="submit" class="login-button" id="resetButton">
+                     <div class="button-content">
+                        <span id="resetButtonText">發送重設郵件</span>
+                        <div class="loading-spinner" id="resetSpinner" style="display: none;"></div>
+                    </div>
+                </button>
+            </form>
+            <div class="message-box" id="resetMessageBox" style="margin-top: 1.5rem;"></div>
+        </div>
+    </div>
+
+    <script>
+        let auth;
+
+        document.addEventListener('DOMContentLoaded', function() {
+            // Check for firebase config first
+            if (typeof firebase === 'undefined' || !firebase.apps.length) {
+                showMessage("messageBox", "❌ 設定錯誤：請在 firebase-config.js 檔案中填寫您的 Firebase 設定。", 'error');
+                document.getElementById('loginButton').disabled = true;
+                document.getElementById('email').disabled = true;
+                document.getElementById('password').disabled = true;
+                return;
+            }
+            
+            auth = firebase.auth();
+            
+            // Check for specific error redirection from dashboard
+            const urlParams = new URLSearchParams(window.location.search);
+            if (urlParams.get('error') === 'no_permission') {
+                showMessage("messageBox", "您沒有權限存取管理後台。請使用正確的管理員帳號登入。", 'error');
+            }
+
+            document.getElementById('loginForm').addEventListener('submit', handleLogin);
+            document.getElementById('passwordResetForm').addEventListener('submit', handlePasswordReset);
+        });
+
+        async function handleLogin(event) {
+            event.preventDefault();
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+
+            if (!email || !password) {
+                showMessage('messageBox', '請輸入完整的登入資訊', 'error');
+                return;
+            }
+
+            setLoading(true, 'login');
+            hideMessage('messageBox');
+
+            const loginTimeout = setTimeout(() => {
+                setLoading(false, 'login');
+                showMessage('messageBox', '登入請求逾時。請檢查您的網路連線或 Firebase 設定是否正確。', 'error');
+            }, 10000); // 10-second timeout
+
+            try {
+                // Step 1: Authenticate the user.
+                await auth.signInWithEmailAndPassword(email, password);
+                clearTimeout(loginTimeout);
+                
+                // Step 2: Redirect. The dashboard page will handle authorization.
+                showMessage('messageBox', '登入成功！正在跳轉...', 'success');
+                window.location.href = 'fixed_admin_dashboard.html';
+
+            } catch (error) {
+                clearTimeout(loginTimeout);
+                setLoading(false, 'login');
+                let errorMessage = '登入失敗，請檢查您的帳號密碼或網路連線。';
+                if (error.code === 'auth/invalid-api-key') {
+                    errorMessage = 'Firebase API 金鑰無效。請檢查 firebase-config.js 中的設定。';
+                } else if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential') {
+                    errorMessage = '帳號或密碼錯誤。';
+                }
+                console.error('Login Error:', error);
+                showMessage('messageBox', errorMessage, 'error');
+            }
+        }
+        
+        async function handlePasswordReset(event) {
+            event.preventDefault();
+            const email = document.getElementById('resetEmail').value;
+            if(!email) {
+                showMessage('resetMessageBox', '請輸入電子郵件', 'error');
+                return;
+            }
+            
+            setLoading(true, 'reset');
+            hideMessage('resetMessageBox');
+            
+            try {
+                await auth.sendPasswordResetEmail(email);
+                setLoading(false, 'reset');
+                showMessage('resetMessageBox', `如果 ${email} 是一個註冊的管理員帳號，一封密碼重設郵件已發送到該信箱。`, 'success');
+            } catch (error) {
+                setLoading(false, 'reset');
+                console.error('Password Reset Error:', error);
+                // To avoid user enumeration, show a generic message
+                showMessage('resetMessageBox', `如果 ${email} 是一個註冊的管理員帳號，一封密碼重設郵件已發送到該信箱。`, 'success');
+            }
+        }
+
+        function setLoading(loading, type) {
+            const button = document.getElementById(`${type}Button`);
+            const spinner = document.getElementById(`${type}Spinner`);
+            const buttonText = document.getElementById(`${type}ButtonText`);
+            const originalText = type === 'login' ? '登入管理系統' : '發送重設郵件';
+            
+            button.disabled = loading;
+            spinner.style.display = loading ? 'block' : 'none';
+            buttonText.textContent = loading ? '處理中...' : originalText;
+        }
+
+        function showMessage(boxId, message, type = 'error') {
+            const messageBox = document.getElementById(boxId);
+            messageBox.className = `message-box ${type}`;
+            messageBox.textContent = message;
+            messageBox.style.display = 'block';
+        }
+
+        function hideMessage(boxId) {
+            document.getElementById(boxId).style.display = 'none';
+        }
+        
+        function showPasswordResetModal() {
+            hideMessage('resetMessageBox');
+            document.getElementById('resetEmail').value = document.getElementById('email').value;
+            showModal('passwordResetModal');
+        }
+        
+        function showModal(modalId) { document.getElementById(modalId).classList.add('show'); }
+        function closeModal(modalId) { document.getElementById(modalId).classList.remove('show'); }
+    </script>
+</body>
+</html>

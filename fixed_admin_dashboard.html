@@ -1,0 +1,1573 @@
+
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>管理員後台 - English Reading Hub</title>
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+    <!-- Central Firebase Config -->
+    <script src="firebase-config.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Noto+Sans+TC:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary-color: #6366f1;
+            --primary-dark: #4f46e5;
+            --success-color: #10b981;
+            --warning-color: #f59e0b;
+            --error-color: #ef4444;
+            --info-color: #06b6d4;
+            
+            --bg-primary: #0f0f1e;
+            --bg-secondary: #1a1a2e;
+            --bg-card: rgba(255, 255, 255, 0.05);
+            
+            --text-primary: #ffffff;
+            --text-secondary: #cbd5e1;
+            --text-muted: #94a3b8;
+            
+            --border-color: rgba(255, 255, 255, 0.1);
+            --shadow-medium: 0 8px 32px rgba(0, 0, 0, 0.2);
+            
+            --gradient-primary: linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #ec4899 100%);
+        }
+
+        body {
+            font-family: 'Inter', 'Noto Sans TC', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.6;
+        }
+
+        .admin-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0 2rem;
+        }
+
+        /* 新版面：Header */
+        .admin-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1.5rem 0;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .header-logo {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .logo-icon {
+            width: 3rem;
+            height: 3rem;
+            background: var(--gradient-primary);
+            border-radius: 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+        }
+
+        .logo-title {
+            font-size: 1.2rem;
+            font-weight: 700;
+        }
+        .logo-subtitle {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+        }
+
+        .header-user-actions {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .admin-user {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.5rem 1rem;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 1rem;
+        }
+
+        .user-avatar {
+            width: 2.5rem;
+            height: 2.5rem;
+            background: var(--gradient-primary);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+        }
+
+        .user-info h4 { font-size: 0.9rem; font-weight: 600; }
+        .user-info p { font-size: 0.8rem; color: var(--text-muted); }
+
+        /* 新版面：Tab Navigation */
+        .tab-navigation {
+            display: flex;
+            gap: 0.5rem;
+            padding: 1rem 0;
+            border-bottom: 1px solid var(--border-color);
+            margin-bottom: 2rem;
+            overflow-x: auto;
+        }
+
+        .tab-item {
+            padding: 0.75rem 1.5rem;
+            color: var(--text-secondary);
+            border-radius: 0.75rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            white-space: nowrap;
+        }
+
+        .tab-item:hover {
+            background: rgba(255, 255, 255, 0.05);
+            color: var(--text-primary);
+        }
+
+        .tab-item.active {
+            background: var(--primary-color);
+            color: white;
+            box-shadow: 0 4px 16px rgba(99, 102, 241, 0.2);
+        }
+        
+        /* 主內容區域 */
+        #page-loader {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: var(--bg-primary);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+            transition: opacity 0.3s ease;
+        }
+
+        .btn {
+            padding: 0.6rem 1.2rem;
+            border: none;
+            border-radius: 0.75rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+        
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none !important;
+            box-shadow: none !important;
+        }
+
+        .btn-primary {
+            background: var(--gradient-primary);
+            color: white;
+        }
+
+        .btn-primary:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 32px rgba(99, 102, 241, 0.3);
+        }
+        
+        .btn-ai {
+            background: linear-gradient(135deg, #10b981, #06b6d4);
+            color: white;
+        }
+
+        .btn-ai:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 32px rgba(16, 185, 129, 0.3);
+        }
+
+
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.1);
+            color: var(--text-primary);
+            border: 1px solid var(--border-color);
+        }
+
+        .btn-secondary:hover:not(:disabled) {
+            background: rgba(255, 255, 255, 0.15);
+        }
+
+        .btn-danger {
+            background: linear-gradient(135deg, #ef4444, #dc2626);
+            color: white;
+        }
+
+        .btn-danger:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 32px rgba(239, 68, 68, 0.3);
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, #10b981, #059669);
+            color: white;
+        }
+
+        .btn-success:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 32px rgba(16, 185, 129, 0.3);
+        }
+
+        /* 統計卡片 */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat-card {
+            background: var(--bg-card);
+            border-radius: 1.5rem;
+            padding: 2rem;
+            border: 1px solid var(--border-color);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 3px;
+            background: var(--gradient-primary);
+        }
+
+        .stat-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 1rem;
+        }
+
+        .stat-icon {
+            width: 3rem;
+            height: 3rem;
+            border-radius: 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+        }
+
+        .stat-icon.success { background: rgba(16, 185, 129, 0.2); color: var(--success-color); }
+        .stat-icon.warning { background: rgba(245, 158, 11, 0.2); color: var(--warning-color); }
+        .stat-icon.info { background: rgba(6, 182, 212, 0.2); color: var(--info-color); }
+        .stat-icon.primary { background: rgba(99, 102, 241, 0.2); color: var(--primary-color); }
+
+        .stat-value {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-label {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            margin-bottom: 0.5rem;
+        }
+
+        /* 內容區域 */
+        .content-section {
+            background: var(--bg-card);
+            border-radius: 1.5rem;
+            border: 1px solid var(--border-color);
+            overflow: hidden;
+            margin-bottom: 2rem;
+        }
+
+        .section-header {
+            padding: 1.5rem 2rem;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .section-title {
+            font-size: 1.4rem;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .section-content {
+            padding: 2rem;
+        }
+        
+        .upload-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+        }
+
+        /* 表格樣式 */
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1rem;
+        }
+
+        .data-table th,
+        .data-table td {
+            padding: 1rem;
+            text-align: left;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .data-table th {
+            background: rgba(255, 255, 255, 0.05);
+            font-weight: 600;
+            color: var(--text-primary);
+            font-size: 0.9rem;
+        }
+
+        .data-table td {
+            color: var(--text-secondary);
+        }
+
+        .data-table tr:hover {
+            background: rgba(255, 255, 255, 0.02);
+        }
+        
+        .pagination-controls {
+            padding: 1.5rem 2rem;
+            border-top: 1px solid var(--border-color);
+            text-align: center;
+        }
+
+        /* 表單樣式 */
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            font-size: 0.9rem;
+        }
+
+        .form-input,
+        .form-select,
+        .form-textarea {
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            appearance: none;
+            width: 100%;
+            padding: 1rem;
+            background-color: rgba(255, 255, 255, 0.05);
+            border: 2px solid var(--border-color);
+            border-radius: 0.75rem;
+            color: var(--text-primary);
+            font-family: inherit;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+        
+        .form-select {
+            background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23cbd5e1' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M2 5l6 6 6-6'/%3e%3c/svg%3e");
+            background-repeat: no-repeat;
+            background-position: right 1rem center;
+            background-size: 1em;
+            padding-right: 3rem;
+        }
+
+        .form-select option {
+            background-color: var(--bg-secondary);
+            color: var(--text-primary);
+        }
+
+        .form-input:focus,
+        .form-select:focus,
+        .form-textarea:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            background-color: rgba(255, 255, 255, 0.08);
+            box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1);
+        }
+
+        .form-textarea {
+            min-height: 120px;
+            resize: vertical;
+        }
+
+
+        /* Modal 樣式 */
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(10px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .modal.show {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .modal-content {
+            background: var(--bg-secondary);
+            border-radius: 1.5rem;
+            border: 1px solid var(--border-color);
+            box-shadow: 0 16px 64px rgba(0, 0, 0, 0.3);
+            max-width: 800px;
+            width: 90%;
+            max-height: 90vh;
+            overflow-y: auto;
+            transform: scale(0.9);
+            transition: transform 0.3s ease;
+        }
+
+        .modal.show .modal-content {
+            transform: scale(1);
+        }
+
+        .modal-header {
+            padding: 1.5rem 2rem;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-title {
+            font-size: 1.3rem;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            font-size: 1.5rem;
+            cursor: pointer;
+            padding: 0.5rem;
+            border-radius: 0.5rem;
+            transition: all 0.3s ease;
+        }
+
+        .modal-close:hover {
+            background: rgba(255, 255, 255, 0.1);
+            color: var(--text-primary);
+        }
+
+        .modal-body {
+            padding: 2rem;
+        }
+        
+        .modal-footer {
+            padding: 1.5rem 2rem;
+            border-top: 1px solid var(--border-color);
+            background: rgba(0,0,0,0.2);
+            display: flex;
+            justify-content: flex-end;
+            gap: 1rem;
+        }
+        
+        .confirmation-modal .modal-content {
+            max-width: 500px;
+        }
+        
+        .json-template {
+            background: rgba(0,0,0,0.3); 
+            padding: 1.5rem; 
+            border-radius: 1rem; 
+            font-size: 0.85rem; 
+            overflow-x: auto;
+            border: 1px solid var(--border-color);
+            max-height: 500px;
+            position: relative;
+        }
+        
+        .copy-btn {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            background: rgba(255,255,255,0.1);
+            color: var(--text-primary);
+            border: 1px solid var(--border-color);
+            font-size: 0.8rem;
+        }
+        .copy-btn:hover {
+            background: var(--primary-color);
+            color: white;
+            border-color: var(--primary-color);
+        }
+
+        /* 載入動畫 */
+        .loading {
+            display: inline-block;
+            width: 1rem;
+            height: 1rem;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-top: 2px solid white;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 5px solid var(--border-color);
+            border-top: 5px solid var(--primary-color);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-bottom: 1rem;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* 通知樣式 */
+        .notification-container {
+            position: fixed;
+            top: 1rem;
+            right: 1rem;
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            align-items: flex-end;
+        }
+
+        .notification {
+            padding: 1rem 1.5rem;
+            border-radius: 0.75rem;
+            color: white;
+            font-weight: 600;
+            box-shadow: var(--shadow-medium);
+            animation: slideInRight 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+            max-width: 400px;
+        }
+
+        .notification.success { background: var(--success-color); }
+        .notification.error { background: var(--error-color); }
+        .notification.warning { background: var(--warning-color); }
+        .notification.info { background: var(--info-color); }
+
+        @keyframes slideInRight {
+            from { transform: translateX(110%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+        
+        .upload-status {
+            padding: 1rem;
+            border-radius: 0.75rem;
+            margin-top: 1rem;
+            display: none;
+        }
+        .upload-status.success {
+            background: rgba(16, 185, 129, 0.2);
+            color: var(--success-color);
+            border: 1px solid var(--success-color);
+        }
+        .upload-status.error {
+            background: rgba(239, 68, 68, 0.2);
+            color: var(--error-color);
+            border: 1px solid var(--error-color);
+        }
+
+        /* 響應式設計 */
+        @media (max-width: 1200px) {
+            .upload-grid { grid-template-columns: 1fr; }
+        }
+        
+        @media (max-width: 1024px) {
+             .admin-header {
+                flex-direction: column;
+                gap: 1rem;
+                align-items: flex-start;
+             }
+        }
+
+        @media (max-width: 768px) {
+            .admin-container { padding: 0 1rem; }
+            .form-grid { grid-template-columns: 1fr; }
+            .header-user-actions {
+                width: 100%;
+                flex-direction: column;
+                align-items: stretch;
+            }
+        }
+
+        /* 隱藏類別 */
+        .hidden { display: none !important; }
+    </style>
+</head>
+<body>
+    <div id="notification-container" class="notification-container"></div>
+
+    <div id="page-loader">
+        <div class="spinner"></div>
+        <p>正在驗證管理員身份...</p>
+    </div>
+    
+    <div class="admin-container" id="adminContainer" style="display: none;">
+        <header class="admin-header">
+            <div class="header-logo">
+                <div class="logo-icon">🛠️</div>
+                <div class="logo-text">
+                    <div class="logo-title">管理後台</div>
+                    <div class="logo-subtitle">English Reading Hub</div>
+                </div>
+            </div>
+            <div class="header-user-actions">
+                 <div class="admin-user">
+                    <div class="user-avatar">👨‍💼</div>
+                    <div class="user-info">
+                        <h4 id="adminUserName">系統管理員</h4>
+                        <p id="adminUserEmail">admin@englishhub.com</p>
+                    </div>
+                </div>
+                <a href="index.html" class="btn btn-primary" target="_blank">🌐 查看網站</a>
+                <button id="logoutBtn" class="btn btn-secondary">🚪 登出</button>
+            </div>
+        </header>
+
+        <nav class="tab-navigation">
+            <a class="tab-item active" data-section="dashboard">📊 <span>儀表板</span></a>
+            <a class="tab-item" data-section="upload">📤 <span>上傳文章與題目</span></a>
+            <a class="tab-item" data-section="edit-questions">✏️ <span>題目修改</span></a>
+            <a class="tab-item" data-section="leaderboard">🏆 <span>排行榜管理</span></a>
+        </nav>
+
+        <main class="content-area">
+            <!-- 儀表板內容 -->
+            <div id="dashboard-section">
+                <!-- This div is a container for either the welcome setup or the main dashboard -->
+            </div>
+
+            <!-- 上傳文章與題目 -->
+            <div id="upload-section" class="content-section hidden">
+                <div class="section-header">
+                    <h2 class="section-title">上傳文章與題目</h2>
+                </div>
+                <div class="section-content">
+                    <div class="upload-grid">
+                        <!-- AI Assistant Section -->
+                        <div>
+                            <h3 class="form-label" style="font-size: 1.2rem; margin-bottom: 1.5rem; display:flex; align-items:center; gap: 0.5rem;">🤖 AI 輔助工具</h3>
+                            <div class="form-group">
+                                <label for="aiArticleContent" class="form-label">1. 貼上文章內容</label>
+                                <textarea id="aiArticleContent" class="form-textarea" rows="8" placeholder="在此貼上純英文文章內容..."></textarea>
+                            </div>
+                            <div class="form-group">
+                                <label for="aiArticleDifficulty" class="form-label">2. 選擇文章難度</label>
+                                <select id="aiArticleDifficulty" class="form-select">
+                                    <option value="intermediate" selected>Intermediate (中級)</option>
+                                    <option value="basic">Basic (初級)</option>
+                                    <option value="advanced">Advanced (高級)</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="aiArticleCategory" class="form-label">3. 輸入文章分類</label>
+                                <input type="text" id="aiArticleCategory" class="form-input" value="technology" placeholder="例如：technology, science...">
+                            </div>
+                            <button class="btn btn-ai" id="aiGenerateBtn">
+                                <span class="loading hidden" id="aiLoading"></span>
+                                ✨ 4. 使用 AI 生成 JSON
+                            </button>
+                             <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 1rem;">AI 將根據文章內容，自動生成標題、ID、5個選擇題(包含是非題)，並填入下方 JSON 內容區塊。</p>
+                        </div>
+
+                        <div>
+                            <label class="form-label">JSON 格式範本</label>
+                            <div class="json-template">
+                            <button class="btn copy-btn" id="copyTemplateBtn">複製</button>
+<pre id="jsonTemplateContent">
+{
+  "article": {
+    "id": "unique_article_id",
+    "title": "Article Title Here",
+    "content": "Full article content...",
+    "difficulty": "由上方『文章難度』表單決定",
+    "category": "由上方『文章分類』表單決定",
+    "estimatedReadingTime": 5,
+    "isActive": true
+  },
+  "questions": [
+    {
+      "questionNumber": 1,
+      "question": "Question text here?",
+      "type": "multiple_choice",
+      "options": [
+        {"text": "Option A", "isCorrect": false},
+        {"text": "Option B", "isCorrect": true}
+      ],
+      "explanation": "Explanation here.",
+      "difficulty": "medium",
+      "isActive": true
+    }
+  ]
+}
+</pre>
+                            </div>
+                        </div>
+                    </div>
+
+                    <hr style="border-color: var(--border-color); margin: 2rem 0;">
+
+                     <div>
+                        <div class="form-group">
+                            <label class="form-label">文章與題目 JSON 內容 (可手動修改 AI 生成的結果)</label>
+                            <textarea id="jsonUploadContent" class="form-textarea" rows="20" placeholder="AI 生成的 JSON 將顯示在此處..."></textarea>
+                        </div>
+                        <button class="btn btn-success" id="uploadJsonBtn">
+                            <span class="loading hidden" id="uploadLoading"></span>
+                            📤 上傳到 Firebase
+                        </button>
+                        <div id="uploadStatus" class="upload-status"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 題目修改 -->
+            <div id="edit-questions-section" class="content-section hidden">
+                <div class="section-header">
+                    <h2 class="section-title">題目修改</h2>
+                </div>
+                <div class="section-content">
+                    <div class="form-group">
+                        <label class="form-label">選擇文章</label>
+                        <select class="form-select" id="articleSelectForEdit"></select>
+                    </div>
+                    <div style="overflow-x: auto;">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>題號</th><th>題目</th><th>類型</th><th>難度</th><th>操作</th>
+                                </tr>
+                            </thead>
+                            <tbody id="questions-table"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 排行榜管理 -->
+            <div id="leaderboard-section" class="content-section hidden">
+                <div class="section-header">
+                    <h2 class="section-title">排行榜管理</h2>
+                    <button class="btn btn-danger" id="clearLeaderboardBtn">
+                        🗑️ 清除排行榜
+                    </button>
+                </div>
+                <div class="section-content">
+                    <div class="form-group" style="max-width: 400px; margin-bottom: 1rem;">
+                        <input type="search" class="form-input" id="leaderboardSearchInput" placeholder="搜尋用戶暱稱...">
+                    </div>
+                     <div style="overflow-x: auto;">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>排名</th><th>暱稱</th><th>總分</th><th>測驗次數</th><th>操作</th>
+                                </tr>
+                            </thead>
+                            <tbody id="leaderboard-table"></tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="pagination-controls">
+                    <button class="btn btn-secondary" id="loadMoreLeaderboardBtn">載入更多</button>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- 編輯題目 Modal -->
+    <div class="modal" id="editQuestionModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">編輯題目</h3>
+                <button class="modal-close">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="editQuestionForm">
+                    <!-- Form content generated by JS -->
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary modal-close-btn">取消</button>
+                <button type="button" class="btn btn-success" id="saveQuestionBtn">
+                    <span class="loading hidden"></span>
+                    保存變更
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 確認 Modal -->
+    <div class="modal confirmation-modal" id="confirmationModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title" id="confirmationTitle">請確認</h3>
+                <button class="modal-close">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p id="confirmationMessage">您確定要執行此操作嗎？</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary modal-close-btn">取消</button>
+                <button type="button" class="btn btn-danger" id="confirmActionBtn">確定</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- App State ---
+        const state = {
+            db: null,
+            auth: null,
+            adminEmails: ['admin@englishhub.com'], // Simplified admin check
+            currentSection: 'dashboard',
+            pagination: {
+                sessions: { lastVisible: null, allLoaded: false },
+                leaderboard: { lastVisible: null, allLoaded: false, users: [] }
+            },
+            editQuestionId: null
+        };
+
+        // --- UI Module ---
+        const ui = {
+            pageLoader: document.getElementById('page-loader'),
+            adminContainer: document.getElementById('adminContainer'),
+            notificationContainer: document.getElementById('notification-container'),
+            dashboardSection: document.getElementById('dashboard-section'),
+
+            showNotification(message, type = 'info', duration = 4000) {
+                const notification = document.createElement('div');
+                notification.className = `notification ${type}`;
+                notification.textContent = message;
+                this.notificationContainer.appendChild(notification);
+                setTimeout(() => {
+                    notification.style.opacity = '0';
+                    notification.style.transform = 'translateX(110%)';
+                    setTimeout(() => notification.remove(), 400);
+                }, duration);
+            },
+            
+            showModal(modalId) {
+                document.getElementById(modalId)?.classList.add('show');
+            },
+            
+            closeModal(modalId) {
+                document.getElementById(modalId)?.classList.remove('show');
+            },
+
+            showConfirmation(title, message, onConfirm) {
+                document.getElementById('confirmationTitle').textContent = title;
+                document.getElementById('confirmationMessage').textContent = message;
+                const confirmBtn = document.getElementById('confirmActionBtn');
+                
+                const newConfirmBtn = confirmBtn.cloneNode(true);
+                confirmBtn.parentNode.replaceChild(newConfirmBtn, confirmBtn);
+                
+                newConfirmBtn.onclick = () => {
+                    this.closeModal('confirmationModal');
+                    onConfirm();
+                };
+                this.showModal('confirmationModal');
+            },
+            
+            setLoading(element, isLoading) {
+                if (!element) return;
+                const loadingSpinner = element.querySelector('.loading');
+                if (loadingSpinner) loadingSpinner.classList.toggle('hidden', !isLoading);
+                element.disabled = isLoading;
+            },
+
+            renderSection(sectionName) {
+                document.querySelectorAll('[id$="-section"]').forEach(s => s.classList.add('hidden'));
+                document.querySelectorAll('.tab-item').forEach(n => n.classList.remove('active'));
+                
+                const sectionToShow = document.getElementById(`${sectionName}-section`);
+                if (sectionToShow) {
+                     sectionToShow.classList.remove('hidden');
+                }
+                
+                const activeTab = document.querySelector(`.tab-item[data-section="${sectionName}"]`);
+                if(activeTab) activeTab.classList.add('active');
+
+                state.currentSection = sectionName;
+                handlers.loadSectionData(sectionName);
+            }
+        };
+
+        // --- Firebase API Module ---
+        const api = {
+            async getStats() {
+                const articlesPromise = state.db.collection('articles').limit(1).get();
+                const usersPromise = state.db.collection('leaderboard').limit(1).get();
+                const sessionsPromise = state.db.collection('test-sessions').limit(1).get();
+                 
+                const articlesCountPromise = state.db.collection('articles').get().then(snap => snap.size);
+                const usersCountPromise = state.db.collection('leaderboard').get().then(snap => snap.size);
+                const sessionsCountPromise = state.db.collection('test-sessions').get().then(snap => snap.size);
+
+
+                const [articles, users, sessions, articlesCount, usersCount, sessionsCount] = await Promise.all([
+                    articlesPromise, usersPromise, sessionsPromise,
+                    articlesCountPromise, usersCountPromise, sessionsCountPromise
+                ]);
+                
+                let avgScore = 'N/A';
+                if (!sessions.empty) {
+                    const allSessions = await state.db.collection('test-sessions').get();
+                    const totalScore = allSessions.docs.reduce((sum, doc) => sum + (doc.data().score || 0), 0);
+                    avgScore = sessionsCount > 0 ? `${(totalScore / sessionsCount).toFixed(1)}%` : 'N/A';
+                }
+
+                return {
+                    articles: articlesCount,
+                    users: usersCount,
+                    sessions: sessionsCount,
+                    avgScore: avgScore,
+                    isEmpty: articles.empty && users.empty
+                };
+            },
+            async getRecentSessions(lastVisible = null) {
+                let query = state.db.collection('test-sessions').orderBy('timestamp', 'desc').limit(10);
+                if (lastVisible) query = query.startAfter(lastVisible);
+                const snapshot = await query.get();
+                return {
+                    docs: snapshot.docs,
+                    lastVisible: snapshot.docs[snapshot.docs.length - 1],
+                    allLoaded: snapshot.empty
+                };
+            },
+            async getArticles() {
+                const snapshot = await state.db.collection('articles').orderBy('createdAt', 'desc').get();
+                return snapshot.docs;
+            },
+            async getQuestions(articleId) {
+                const query = state.db.collection('questions').where('articleId', '==', articleId);
+                const snapshot = await query.get();
+                const docs = snapshot.docs.map(d => d);
+                // Sort on client-side to avoid needing a composite index
+                docs.sort((a, b) => (a.data().questionNumber || 0) - (b.data().questionNumber || 0));
+                return docs;
+            },
+            async getLeaderboard(lastVisible = null) {
+                let query = state.db.collection('leaderboard').orderBy('totalScore', 'desc').limit(20);
+                if (lastVisible) query = query.startAfter(lastVisible);
+                const snapshot = await query.get();
+                return {
+                    docs: snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })),
+                    lastVisible: snapshot.docs[snapshot.docs.length - 1],
+                    allLoaded: snapshot.empty
+                };
+            }
+        };
+
+        // --- Handlers ---
+        const handlers = {
+            init() {
+                if (typeof firebase === 'undefined' || !firebase.apps.length) {
+                    ui.pageLoader.innerHTML = `<div style="color: #ef4444;">❌ 設定錯誤</div><p>請在 firebase-config.js 填寫 Firebase 設定。</p>`;
+                    return;
+                }
+                
+                state.db = firebase.firestore();
+                state.auth = firebase.auth();
+                
+                this.setupEventListeners();
+                this.handleAuthentication();
+            },
+
+            setupEventListeners() {
+                document.querySelectorAll('.tab-item[data-section]').forEach(item => {
+                    item.addEventListener('click', () => ui.renderSection(item.getAttribute('data-section')));
+                });
+                document.getElementById('logoutBtn').addEventListener('click', () => {
+                    ui.showConfirmation('登出', '您確定要登出管理後台嗎？', () => state.auth.signOut());
+                });
+                document.getElementById('uploadJsonBtn').addEventListener('click', this.handleUpload);
+                document.getElementById('copyTemplateBtn').addEventListener('click', this.copyJsonTemplate);
+                document.getElementById('articleSelectForEdit').addEventListener('change', this.loadQuestionsForEdit);
+                document.getElementById('saveQuestionBtn').addEventListener('click', this.handleEditQuestion);
+                document.getElementById('clearLeaderboardBtn').addEventListener('click', this.confirmClearLeaderboard);
+                document.getElementById('leaderboardSearchInput').addEventListener('input', this.handleLeaderboardSearch);
+                 document.getElementById('loadMoreLeaderboardBtn').addEventListener('click', () => this.loadLeaderboardData(true));
+                document.querySelectorAll('.modal').forEach(modal => {
+                    modal.addEventListener('click', e => {
+                        if (e.target === modal || e.target.classList.contains('modal-close') || e.target.classList.contains('modal-close-btn')) {
+                            ui.closeModal(modal.id);
+                        }
+                    });
+                });
+            },
+            
+            handleAuthentication() {
+                const timeout = setTimeout(() => {
+                     if (ui.pageLoader.style.display !== 'none') {
+                        ui.pageLoader.innerHTML = `<div style="color: #ef4444;">❌ 連線逾時</div><p>無法驗證管理員身份，請檢查您的網路連線或 Firebase 安全規則。</p>`;
+                    }
+                }, 15000);
+
+                state.auth.onAuthStateChanged(async (user) => {
+                    clearTimeout(timeout);
+                    if (user) {
+                        if (state.adminEmails.includes(user.email)) {
+                            document.getElementById('adminUserName').textContent = '管理員';
+                            document.getElementById('adminUserEmail').textContent = user.email;
+                            ui.pageLoader.style.opacity = '0';
+                            setTimeout(() => {
+                                ui.pageLoader.style.display = 'none';
+                                ui.adminContainer.style.display = 'block';
+                            }, 300);
+                            ui.renderSection('dashboard');
+                        } else {
+                           await state.auth.signOut();
+                           window.location.href = 'admin_login.html?error=no_permission';
+                        }
+                    } else {
+                        window.location.href = 'admin_login.html';
+                    }
+                });
+            },
+
+            loadSectionData(sectionName) {
+                switch(sectionName) {
+                    case 'dashboard': this.loadDashboardData(); break;
+                    case 'edit-questions': this.loadArticlesForSelection(); break;
+                    case 'leaderboard': this.loadLeaderboardData(); break;
+                    case 'upload': /* No initial data loading needed */ break;
+                }
+            },
+            
+            async loadDashboardData(loadMore = false) {
+                 if (loadMore) { // This function is for loading more sessions, not the whole dashboard
+                    const loadBtn = document.getElementById('loadMoreSessionsBtn');
+                    if (!loadBtn) return;
+                    ui.setLoading(loadBtn, true);
+                    try {
+                        const { docs, lastVisible, allLoaded } = await api.getRecentSessions(state.pagination.sessions.lastVisible);
+                        const table = document.getElementById('recentSessionsTable');
+                        if (docs.length > 0) {
+                            docs.forEach(doc => {
+                                const s = doc.data();
+                                table.innerHTML += `<tr><td>${s.timestamp.toDate().toLocaleString()}</td><td>${s.nickname}</td><td>${s.articleTitle}</td><td>${s.score}%</td><td><a href="test_result_analyzer.html?sessionId=${doc.id}" target="_blank" class="btn btn-secondary" style="padding:0.4rem 0.8rem;font-size:0.8rem;">分析</a></td></tr>`;
+                            });
+                            state.pagination.sessions.lastVisible = lastVisible;
+                        }
+                        state.pagination.sessions.allLoaded = allLoaded || docs.length < 10;
+                        loadBtn.classList.toggle('hidden', state.pagination.sessions.allLoaded);
+                    } catch(e) { ui.showNotification('載入測驗記錄失敗: ' + e.message, 'error'); }
+                    finally { ui.setLoading(loadBtn, false); }
+                    return;
+                }
+
+                ui.dashboardSection.innerHTML = `<div class="spinner" style="margin: 4rem auto;"></div>`;
+
+                try {
+                    const stats = await api.getStats();
+
+                    if (stats.isEmpty) {
+                        ui.dashboardSection.innerHTML = `
+                            <div id="welcome-setup-section" class="content-section" style="padding: 4rem 2rem; text-align: center;">
+                                <h2 class="section-title" style="font-size: 1.8rem; margin-bottom: 1.5rem;">🚀 歡迎使用管理後台！</h2>
+                                <p style="color: var(--text-secondary); max-width: 600px; text-align: center; margin: 0 auto 2rem auto;">看起來資料庫還是空的。點擊下方按鈕，系統將自動為您新增一些範例文章、題目與使用者，方便您預覽與測試所有功能。</p>
+                                <button class="btn btn-success" id="generateSampleDataBtn" style="padding: 1rem 2rem; font-size: 1.1rem;">
+                                    <span class="loading hidden"></span>
+                                    ✨ 一鍵產生範例資料
+                                </button>
+                            </div>`;
+                        document.getElementById('generateSampleDataBtn').addEventListener('click', () => this.handleGenerateSampleData());
+                    } else {
+                        ui.dashboardSection.innerHTML = `
+                            <div class="stats-grid" id="statsGrid">
+                                <div class="stat-card"><div class="stat-header"><div><div class="stat-value">${stats.articles}</div><div class="stat-label">總文章數</div></div><div class="stat-icon success">📚</div></div></div>
+                                <div class="stat-card"><div class="stat-header"><div><div class="stat-value">${stats.users}</div><div class="stat-label">總答題人數</div></div><div class="stat-icon info">👥</div></div></div>
+                                <div class="stat-card"><div class="stat-header"><div><div class="stat-value">${stats.sessions.toLocaleString()}</div><div class="stat-label">總測驗次數</div></div><div class="stat-icon warning">📝</div></div></div>
+                                <div class="stat-card"><div class="stat-header"><div><div class="stat-value">${stats.avgScore}</div><div class="stat-label">平均正確率</div></div><div class="stat-icon primary">📊</div></div></div>
+                            </div>
+                            <div class="content-section">
+                                <div class="section-header">
+                                    <h2 class="section-title">最近測驗記錄</h2>
+                                </div>
+                                <div class="section-content" style="overflow-x: auto;">
+                                    <table class="data-table">
+                                        <thead><tr><th>時間</th><th>用戶</th><th>文章</th><th>分數</th><th>操作</th></tr></thead>
+                                        <tbody id="recentSessionsTable"></tbody>
+                                    </table>
+                                </div>
+                                <div class="pagination-controls">
+                                    <button class="btn btn-secondary" id="loadMoreSessionsBtn">載入更多</button>
+                                </div>
+                            </div>
+                        `;
+                        state.pagination.sessions = { lastVisible: null, allLoaded: false };
+                        document.getElementById('loadMoreSessionsBtn').addEventListener('click', () => this.loadDashboardData(true));
+                        await this.loadDashboardData(true); // Load initial sessions
+                    }
+                } catch (e) {
+                    console.error("Dashboard loading error:", e);
+                    ui.dashboardSection.innerHTML = `<div style="color:var(--error-color); padding: 2rem;">載入儀表板失敗: ${e.message}</div>`;
+                    ui.showNotification("載入儀表板失敗: " + e.message, "error");
+                }
+            },
+
+            async handleUpload() {
+                const jsonContent = document.getElementById('jsonUploadContent').value;
+                if (!jsonContent.trim()) return ui.showNotification('JSON 內容不可為空', 'error');
+
+                const btn = document.getElementById('uploadJsonBtn');
+                ui.setLoading(btn, true);
+
+                try {
+                    const data = JSON.parse(jsonContent);
+                    if (!data.article || !data.questions) throw new Error('JSON 格式錯誤，缺少 article 或 questions 屬性。');
+
+                    // Automatically apply form values to the JSON data
+                    const articleDifficulty = document.getElementById('aiArticleDifficulty').value;
+                    const articleCategory = document.getElementById('aiArticleCategory').value.trim();
+                    if (!articleCategory) {
+                        throw new Error('請務必在表單中輸入「文章分類」。');
+                    }
+                    data.article.difficulty = articleDifficulty;
+                    data.article.category = articleCategory;
+
+                    const batch = state.db.batch();
+                    const articleRef = state.db.collection('articles').doc(data.article.id);
+                    batch.set(articleRef, { ...data.article, questionCount: data.questions.length, createdAt: firebase.firestore.FieldValue.serverTimestamp() });
+                    data.questions.forEach((q, index) => {
+                        const qRef = state.db.collection('questions').doc();
+                        batch.set(qRef, { ...q, questionNumber: q.questionNumber || index + 1, articleId: data.article.id, createdAt: firebase.firestore.FieldValue.serverTimestamp() });
+                    });
+                    await batch.commit();
+
+                    document.getElementById('jsonUploadContent').value = '';
+                    ui.showNotification(`成功新增文章及 ${data.questions.length} 個題目`, 'success');
+                } catch (error) { 
+                    ui.showNotification(`上傳失敗: ${error.message}`, 'error'); 
+                } finally { 
+                    ui.setLoading(btn, false); 
+                }
+            },
+            
+            copyJsonTemplate() {
+                const content = document.getElementById('jsonTemplateContent').innerText;
+                navigator.clipboard.writeText(content).then(() => ui.showNotification('範本已複製!', 'success'));
+            },
+
+            async loadArticlesForSelection() {
+                const selectEl = document.getElementById('articleSelectForEdit');
+                selectEl.innerHTML = '<option value="">載入中...</option>';
+                try {
+                    const docs = await api.getArticles();
+                    selectEl.innerHTML = '<option value="">請選擇文章</option>';
+                    docs.forEach(doc => selectEl.innerHTML += `<option value="${doc.id}">${doc.data().title}</option>`);
+                } catch(e) { ui.showNotification('載入文章列表失敗: ' + e.message, 'error'); }
+            },
+            
+            async loadQuestionsForEdit() {
+                const articleId = document.getElementById('articleSelectForEdit').value;
+                const tableBody = document.getElementById('questions-table');
+                if (!articleId) {
+                    tableBody.innerHTML = '<tr><td colspan="5" style="text-align: center;">請先選擇文章</td></tr>';
+                    return;
+                }
+                tableBody.innerHTML = `<tr><td colspan="5" style="text-align: center;">載入中...</td></tr>`;
+                try {
+                    const docs = await api.getQuestions(articleId);
+                    if (docs.empty || docs.length === 0) {
+                        tableBody.innerHTML = `<tr><td colspan="5" style="text-align: center;">此文章尚無題目</td></tr>`;
+                        return;
+                    }
+                    tableBody.innerHTML = '';
+                    docs.forEach(doc => {
+                        const q = doc.data();
+                        tableBody.innerHTML += `<tr><td>${q.questionNumber}</td><td>${q.question.substring(0, 50)}...</td><td>${q.type}</td><td>${q.difficulty}</td><td><button class="btn btn-secondary" style="padding:0.4rem 0.8rem" onclick="handlers.openEditQuestionModal('${doc.id}')">編輯</button><button class="btn btn-danger" style="padding:0.4rem 0.8rem; margin-left:0.5rem" onclick="handlers.confirmDeleteQuestion('${doc.id}')">刪除</button></td></tr>`;
+                    });
+                } catch (e) { 
+                    tableBody.innerHTML = `<tr><td colspan="5" style="color:var(--error-color);text-align:center">載入題目失敗: ${e.message}</td></tr>`;
+                }
+            },
+            
+            async openEditQuestionModal(questionId) {
+                state.editQuestionId = questionId;
+                try {
+                    const doc = await state.db.collection('questions').doc(questionId).get();
+                    if (!doc.exists) throw new Error('找不到題目');
+                    const q = doc.data();
+                    
+                    const form = document.getElementById('editQuestionForm');
+                    let optionsHtml = '';
+                    if (q.type === 'multiple_choice') {
+                        const correctIndex = q.options.findIndex(opt => opt.isCorrect);
+                        optionsHtml = `
+                            ${['A', 'B', 'C', 'D'].map((opt, i) => `<div class="form-group"><label class="form-label">選項 ${opt}</label><input type="text" class="form-input" name="option${opt}" value="${q.options[i]?.text || ''}"></div>`).join('')}
+                            <div class="form-group"><label class="form-label">正確答案</label><select class="form-select" name="correctAnswer">${['A','B','C','D'].map((opt, i) => `<option value="${i}" ${i === correctIndex ? 'selected' : ''}>選項 ${opt}</option>`).join('')}</select></div>`;
+                    } else { // true_false
+                        const correctIndex = q.options.findIndex(opt => opt.isCorrect);
+                        optionsHtml = `<div class="form-group"><label class="form-label">正確答案</label><select class="form-select" name="correctAnswer"><option value="0" ${correctIndex === 0 ? 'selected' : ''}>True</option><option value="1" ${correctIndex === 1 ? 'selected' : ''}>False</option></select></div>`;
+                    }
+
+                    form.innerHTML = `
+                        <div class="form-grid">
+                            <div class="form-group"><label class="form-label">類型</label><input class="form-input" name="type" value="${q.type}" readonly></div>
+                            <div class="form-group"><label class="form-label">難度</label><select class="form-select" name="difficulty" value="${q.difficulty}"><option>easy</option><option>medium</option><option>hard</option></select></div>
+                            <div class="form-group"><label class="form-label">題號</label><input type="number" class="form-input" name="questionNumber" value="${q.questionNumber}" min="1" required></div>
+                        </div>
+                        <div class="form-group"><label class="form-label">題目</label><textarea class="form-textarea" name="question" required>${q.question}</textarea></div>
+                        ${optionsHtml}
+                        <div class="form-group"><label class="form-label">解析</label><textarea class="form-textarea" name="explanation">${q.explanation || ''}</textarea></div>`;
+                    ui.showModal('editQuestionModal');
+                } catch(e) { ui.showNotification('載入題目資料失敗: ' + e.message, 'error'); }
+            },
+
+            async handleEditQuestion() {
+                const btn = document.getElementById('saveQuestionBtn');
+                ui.setLoading(btn, true);
+                const form = new FormData(document.getElementById('editQuestionForm'));
+                const data = Object.fromEntries(form.entries());
+                
+                const updatedData = {
+                    difficulty: data.difficulty,
+                    questionNumber: parseInt(data.questionNumber),
+                    question: data.question,
+                    explanation: data.explanation,
+                    updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
+                    options: []
+                };
+
+                if (data.type === 'multiple_choice') {
+                    updatedData.options = ['A', 'B', 'C', 'D'].map((opt, i) => ({
+                        text: data[`option${opt}`],
+                        isCorrect: i === parseInt(data.correctAnswer)
+                    })).filter(o => o.text);
+                } else {
+                    updatedData.options = [
+                        { text: 'True', isCorrect: parseInt(data.correctAnswer) === 0 },
+                        { text: 'False', isCorrect: parseInt(data.correctAnswer) === 1 }
+                    ];
+                }
+
+                try {
+                    await state.db.collection('questions').doc(state.editQuestionId).update(updatedData);
+                    ui.closeModal('editQuestionModal');
+                    ui.showNotification('題目更新成功！', 'success');
+                    this.loadQuestionsForEdit();
+                } catch (e) { ui.showNotification(`更新失敗: ${e.message}`, 'error'); }
+                finally { ui.setLoading(btn, false); }
+            },
+            
+            confirmDeleteQuestion(questionId) {
+                ui.showConfirmation('刪除題目', '您確定要刪除此題目嗎？此操作無法復原。', () => this.deleteQuestion(questionId));
+            },
+
+            async deleteQuestion(questionId) {
+                try {
+                    await state.db.runTransaction(async t => {
+                        const qRef = state.db.collection('questions').doc(questionId);
+                        const qDoc = await t.get(qRef);
+                        if (!qDoc.exists) throw new Error("找不到題目");
+                        const articleId = qDoc.data().articleId;
+                        const aRef = state.db.collection('articles').doc(articleId);
+                        t.delete(qRef);
+                        t.update(aRef, { questionCount: firebase.firestore.FieldValue.increment(-1) });
+                    });
+                    ui.showNotification(`題目已刪除`, 'success');
+                    this.loadQuestionsForEdit();
+                } catch(e) { ui.showNotification(`刪除失敗: ${e.message}`, 'error'); }
+            },
+            
+            async loadLeaderboardData(loadMore = false) {
+                const loadBtn = document.getElementById('loadMoreLeaderboardBtn');
+                if (!loadBtn) return;
+                ui.setLoading(loadBtn, true);
+
+                if (!loadMore) {
+                    state.pagination.leaderboard = { lastVisible: null, allLoaded: false, users: [] };
+                    document.getElementById('leaderboard-table').innerHTML = '';
+                    document.getElementById('leaderboardSearchInput').value = '';
+                }
+
+                try {
+                    const { docs, lastVisible, allLoaded } = await api.getLeaderboard(state.pagination.leaderboard.lastVisible);
+                    state.pagination.leaderboard.users.push(...docs);
+                    
+                    if (!loadMore) {
+                       this.renderLeaderboard(state.pagination.leaderboard.users); 
+                    } else {
+                       this.renderLeaderboard(docs, true); // Append
+                    }
+                    
+                    state.pagination.leaderboard.lastVisible = lastVisible;
+                    state.pagination.leaderboard.allLoaded = allLoaded || docs.length < 20;
+                    loadBtn.classList.toggle('hidden', state.pagination.leaderboard.allLoaded);
+                } catch(e) { ui.showNotification('載入排行榜失敗', 'error'); console.error(e) }
+                finally { ui.setLoading(loadBtn, false); }
+            },
+
+            renderLeaderboard(users, append = false) {
+                const table = document.getElementById('leaderboard-table');
+                if (!append) table.innerHTML = '';
+                const baseRank = append ? table.rows.length : 0;
+                users.forEach((user, index) => {
+                    table.innerHTML += `<tr data-nickname="${user.nickname.toLowerCase()}"><td>${baseRank + index + 1}</td><td>${user.nickname}</td><td>${user.totalScore || 0}</td><td>${user.testsCompleted || 0}</td><td><button class="btn btn-danger" style="padding:0.4rem 0.8rem" onclick="handlers.confirmRemoveUser('${user.id}','${user.nickname}')">移除</button></td></tr>`;
+                });
+            },
+            
+            handleLeaderboardSearch(event) {
+                const query = event.target.value.toLowerCase();
+                document.querySelectorAll('#leaderboard-table tr').forEach(row => {
+                    const nickname = row.dataset.nickname || '';
+                    row.classList.toggle('hidden', !nickname.includes(query));
+                });
+            },
+
+            confirmClearLeaderboard() {
+                ui.showConfirmation('清除排行榜', '確定要清除整個排行榜？此操作無法復原。', async () => {
+                    ui.showNotification('正在清除...', 'warning');
+                    try {
+                        const snapshot = await state.db.collection('leaderboard').limit(500).get();
+                        const batch = state.db.batch();
+                        snapshot.docs.forEach(doc => batch.delete(doc.ref));
+                        await batch.commit();
+                        ui.showNotification('排行榜已清除！', 'success');
+                        this.loadLeaderboardData();
+                    } catch (e) { ui.showNotification('清除失敗', 'error'); }
+                });
+            },
+            
+            confirmRemoveUser(userId, nickname) {
+                 ui.showConfirmation('移除用戶', `確定要從排行榜移除 "${nickname}" 嗎？`, async () => {
+                    try {
+                        await state.db.collection('leaderboard').doc(userId).delete();
+                        ui.showNotification(`用戶 ${nickname} 已移除！`, 'success');
+                        this.loadLeaderboardData();
+                    } catch(e) { ui.showNotification('移除失敗', 'error'); }
+                });
+            },
+            
+            async handleGenerateSampleData() {
+                const btn = document.getElementById('generateSampleDataBtn');
+                ui.setLoading(btn, true);
+                ui.showNotification('正在產生範例資料，請稍候...', 'info');
+
+                try {
+                    const batch = state.db.batch();
+                    const now = firebase.firestore.FieldValue.serverTimestamp();
+
+                    // Sample Articles and Questions
+                    const sampleArticle1 = { id: 'tech_future_ai', title: 'The Future of Artificial Intelligence', content: 'AI is rapidly evolving...', difficulty: 'intermediate', category: 'technology', estimatedReadingTime: 5, questionCount: 2, createdAt: now, isActive: true };
+                    const questions1 = [
+                        { articleId: 'tech_future_ai', question: 'What is the main topic?', options: [{text: 'AI evolution', isCorrect: true}, {text: 'Robots', isCorrect: false}], type: 'multiple_choice', explanation: 'The text focuses on AI.', difficulty: 'easy', isActive: true, questionNumber: 1, createdAt: now },
+                        { articleId: 'tech_future_ai', question: 'Is AI development slow?', options: [{text: 'True', isCorrect: false}, {text: 'False', isCorrect: true}], type: 'true_false', explanation: 'The text states it is rapidly evolving.', difficulty: 'easy', isActive: true, questionNumber: 2, createdAt: now },
+                    ];
+                     const sampleArticle2 = { id: 'space_exploration_mars', title: 'Exploring the Red Planet: Mars', content: 'Humanitys fascination with Mars...', difficulty: 'advanced', category: 'science', estimatedReadingTime: 8, questionCount: 2, createdAt: now, isActive: true };
+                    const questions2 = [
+                        { articleId: 'space_exploration_mars', question: 'What planet is discussed?', options: [{text: 'Venus', isCorrect: false}, {text: 'Mars', isCorrect: true}], type: 'multiple_choice', explanation: 'The title and content mention Mars.', difficulty: 'easy', isActive: true, questionNumber: 1, createdAt: now },
+                        { articleId: 'space_exploration_mars', question: 'Is Mars exploration new?', options: [{text: 'True', isCorrect: false}, {text: 'False', isCorrect: true}], type: 'true_false', explanation: 'The text implies a long-standing fascination.', difficulty: 'medium', isActive: true, questionNumber: 2, createdAt: now },
+                    ];
+                    
+                    batch.set(state.db.collection('articles').doc(sampleArticle1.id), sampleArticle1);
+                    questions1.forEach(q => batch.set(state.db.collection('questions').doc(), q));
+                    batch.set(state.db.collection('articles').doc(sampleArticle2.id), sampleArticle2);
+                    questions2.forEach(q => batch.set(state.db.collection('questions').doc(), q));
+
+                    // Sample Leaderboard Users
+                    const sampleUsers = [
+                        { id: 'user_alpha', data: { nickname: 'Alpha', totalScore: 185, rank: '高手級', testsCompleted: 2, achievements: ['first_test'], createdAt: now }},
+                        { id: 'user_beta', data: { nickname: 'Beta', totalScore: 95, rank: '新手級', testsCompleted: 1, achievements: ['first_test', 'perfect_score'], createdAt: now }},
+                        { id: 'user_gamma', data: { nickname: 'Gamma', totalScore: 70, rank: '新手級', testsCompleted: 1, achievements: [], createdAt: now }},
+                    ];
+                    sampleUsers.forEach(user => batch.set(state.db.collection('leaderboard').doc(user.id), user.data));
+                    
+                    // Sample Test Sessions
+                    const sampleSessions = [
+                        { userId: 'user_alpha', nickname: 'Alpha', articleId: 'tech_future_ai', articleTitle: sampleArticle1.title, score: 90, completionTime: 250, timestamp: now, correctCount: 9, totalQuestions: 10, userAnswers: [], newAchievements:[] },
+                        { userId: 'user_beta', nickname: 'Beta', articleId: 'space_exploration_mars', articleTitle: sampleArticle2.title, score: 100, completionTime: 400, timestamp: now, correctCount: 10, totalQuestions: 10, userAnswers: [], newAchievements:['perfect_score'] },
+                    ];
+                    sampleSessions.forEach(session => batch.set(state.db.collection('test-sessions').doc(), session));
+
+                    await batch.commit();
+                    ui.showNotification('範例資料已成功建立！', 'success');
+                    handlers.loadDashboardData(); // Refresh the dashboard view
+
+                } catch (e) {
+                    console.error("Failed to generate sample data:", e);
+                    ui.showNotification('產生範例資料失敗: ' + e.message, 'error');
+                } finally {
+                    ui.setLoading(btn, false);
+                }
+            }
+        };
+
+        // --- Entry Point ---
+        document.addEventListener('DOMContentLoaded', () => handlers.init());
+    </script>
+    <script type="module">
+        import { GoogleGenAI, Type } from "@google/genai";
+
+        const aiGenerateBtn = document.getElementById('aiGenerateBtn');
+        aiGenerateBtn.addEventListener('click', handleAIGenerate);
+
+        async function handleAIGenerate() {
+            const articleText = document.getElementById('aiArticleContent').value;
+            const articleDifficulty = document.getElementById('aiArticleDifficulty').value;
+            const articleCategory = document.getElementById('aiArticleCategory').value.trim().toLowerCase();
+
+            if (!articleText.trim()) {
+                ui.showNotification('請先貼上文章內容', 'warning');
+                return;
+            }
+            if (!articleCategory.trim()) {
+                ui.showNotification('請輸入文章分類', 'warning');
+                return;
+            }
+            
+            // Safely check for API key without crashing the browser
+            try {
+                if (typeof process === 'undefined' || typeof process.env === 'undefined' || !process.env.API_KEY) {
+                    throw new Error();
+                }
+            } catch (e) {
+                ui.showNotification('缺少 Gemini API Key，無法使用 AI 功能。請參考設定指南第八步設定。', 'error');
+                return;
+            }
+
+            ui.setLoading(aiGenerateBtn, true);
+
+            try {
+                const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+                const schema = {
+                    type: Type.OBJECT,
+                    properties: {
+                        article: {
+                            type: Type.OBJECT,
+                            properties: {
+                                id: { type: Type.STRING, description: "A short, unique, snake_case string based on the title, max 20 chars." },
+                                title: { type: Type.STRING, description: "A concise and engaging title for the article." },
+                                content: { type: Type.STRING, description: "The original article text provided by the user." },
+                                difficulty: { type: Type.STRING, description: "Use the exact difficulty value provided in the prompt." },
+                                category: { type: Type.STRING, description: "Use the exact category value provided in the prompt." },
+                                estimatedReadingTime: { type: Type.INTEGER, description: "An integer representing the estimated reading time in minutes." },
+                                isActive: { type: Type.BOOLEAN, description: "Set to true." }
+                            }
+                        },
+                        questions: {
+                            type: Type.ARRAY,
+                            description: "An array of exactly 5 questions, including a mix of multiple-choice and true/false types.",
+                            items: {
+                                type: Type.OBJECT,
+                                properties: {
+                                    questionNumber: { type: Type.INTEGER, description: "The sequential number of the question, starting from 1." },
+                                    question: { type: Type.STRING, description: "The question text." },
+                                    type: { type: Type.STRING, description: "The question type. Must be either 'multiple_choice' or 'true_false'." },
+                                    options: {
+                                        type: Type.ARRAY,
+                                        description: "An array of option objects. For 'multiple_choice', provide 4 options. For 'true_false', provide 2 options ('True' and 'False').",
+                                        items: {
+                                            type: Type.OBJECT,
+                                            properties: {
+                                                text: { type: Type.STRING, description: "The option text." },
+                                                isCorrect: { type: Type.BOOLEAN, description: "True if this is the correct answer, otherwise false." }
+                                            }
+                                        }
+                                    },
+                                    explanation: { type: Type.STRING, description: "A brief explanation for the correct answer." },
+                                    difficulty: { type: Type.STRING, description: "Difficulty of the question, must be 'easy', 'medium', or 'hard'." },
+                                    isActive: { type: Type.BOOLEAN, description: "Set to true." }
+                                }
+                            }
+                        }
+                    }
+                };
+
+                const prompt = `Based on the following article text, generate a JSON object that strictly follows the provided schema.
+
+                IMPORTANT INSTRUCTIONS:
+                - The 'content' field in the 'article' object MUST be the original, unmodified article text.
+                - For the 'article' object, you MUST use these exact values: difficulty: "${articleDifficulty}", category: "${articleCategory}".
+                - Generate a mix of question types (e.g., 3 multiple-choice, 2 true/false).
+
+                Article Text:
+                ---
+                ${articleText}
+                ---`;
+                
+                const response = await ai.models.generateContent({
+                    model: 'gemini-2.5-flash',
+                    contents: prompt,
+                    config: {
+                      responseMimeType: "application/json",
+                      responseSchema: schema,
+                    }
+                });
+                
+                const generatedJson = JSON.parse(response.text);
+                
+                // Override with user-defined values and original content as a safeguard
+                generatedJson.article.difficulty = articleDifficulty;
+                generatedJson.article.category = articleCategory;
+                generatedJson.article.content = articleText;
+
+                document.getElementById('jsonUploadContent').value = JSON.stringify(generatedJson, null, 2);
+                ui.showNotification('AI 已成功生成 JSON！', 'success');
+
+            } catch (error) {
+                console.error('AI Generation Error:', error);
+                ui.showNotification('AI 生成失敗: ' + error.message, 'error');
+            } finally {
+                ui.setLoading(aiGenerateBtn, false);
+            }
+        }
+    </script>
+</body>
+</html>
