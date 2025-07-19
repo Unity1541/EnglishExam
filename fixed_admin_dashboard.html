@@ -781,10 +781,14 @@
                     <h2 class="section-title">題目修改</h2>
                 </div>
                 <div class="section-content">
-                    <div class="form-group">
-                        <label class="form-label">選擇文章</label>
-                        <select class="form-select" id="articleSelectForEdit"></select>
+                    <div class="form-group" style="display: flex; align-items: center; gap: 1rem; flex-wrap: wrap;">
+                        <div style="flex-grow: 1;">
+                            <label for="articleSelectForEdit" class="form-label">選擇文章</label>
+                            <select class="form-select" id="articleSelectForEdit"></select>
+                        </div>
+                        <button class="btn btn-danger" id="deleteArticleBtn" disabled style="align-self: flex-end; margin-bottom: 2px;">🗑️ 刪除整篇文章</button>
                     </div>
+
                     <div style="overflow-x: auto;">
                         <table class="data-table">
                             <thead>
@@ -1038,6 +1042,7 @@
                 document.getElementById('uploadJsonBtn').addEventListener('click', this.handleUpload);
                 document.getElementById('copyTemplateBtn').addEventListener('click', this.copyJsonTemplate);
                 document.getElementById('articleSelectForEdit').addEventListener('change', this.loadQuestionsForEdit);
+                document.getElementById('deleteArticleBtn').addEventListener('click', () => this.confirmDeleteArticle());
                 document.getElementById('saveQuestionBtn').addEventListener('click', this.handleEditQuestion);
                 document.getElementById('clearLeaderboardBtn').addEventListener('click', this.confirmClearLeaderboard);
                 document.getElementById('leaderboardSearchInput').addEventListener('input', this.handleLeaderboardSearch);
@@ -1217,6 +1222,10 @@
             async loadQuestionsForEdit() {
                 const articleId = document.getElementById('articleSelectForEdit').value;
                 const tableBody = document.getElementById('questions-table');
+                const deleteBtn = document.getElementById('deleteArticleBtn');
+                
+                deleteBtn.disabled = !articleId;
+
                 if (!articleId) {
                     tableBody.innerHTML = '<tr><td colspan="5" style="text-align: center;">請先選擇文章</td></tr>';
                     return;
@@ -1326,6 +1335,50 @@
                 } catch(e) { ui.showNotification(`刪除失敗: ${e.message}`, 'error'); }
             },
             
+            confirmDeleteArticle() {
+                const selectEl = document.getElementById('articleSelectForEdit');
+                const articleId = selectEl.value;
+                if (!articleId) return;
+
+                const articleTitle = selectEl.options[selectEl.selectedIndex].text;
+                
+                ui.showConfirmation(
+                    '刪除整篇文章', 
+                    `您確定要刪除文章「${articleTitle}」嗎？這將會一併刪除此文章下的所有題目，且此操作無法復原。`, 
+                    () => this.deleteArticle(articleId)
+                );
+            },
+
+            async deleteArticle(articleId) {
+                ui.showNotification('正在刪除文章...', 'warning');
+                try {
+                    const batch = state.db.batch();
+
+                    const questionsQuery = state.db.collection('questions').where('articleId', '==', articleId);
+                    const questionsSnapshot = await questionsQuery.get();
+                    questionsSnapshot.docs.forEach(doc => {
+                        batch.delete(doc.ref);
+                    });
+
+                    const articleRef = state.db.collection('articles').doc(articleId);
+                    batch.delete(articleRef);
+                    
+                    await batch.commit();
+                    
+                    ui.showNotification(`文章及其 ${questionsSnapshot.size} 個題目已成功刪除`, 'success');
+
+                    this.loadArticlesForSelection(); 
+                    
+                    const tableBody = document.getElementById('questions-table');
+                    tableBody.innerHTML = '<tr><td colspan="5" style="text-align: center;">請先選擇文章</td></tr>';
+                    document.getElementById('deleteArticleBtn').disabled = true;
+
+                } catch (e) {
+                    console.error("Failed to delete article:", e);
+                    ui.showNotification(`刪除文章失敗: ${e.message}`, 'error');
+                }
+            },
+
             async loadLeaderboardData(loadMore = false) {
                 const loadBtn = document.getElementById('loadMoreLeaderboardBtn');
                 if (!loadBtn) return;
