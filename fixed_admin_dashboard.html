@@ -680,7 +680,8 @@
 
         <nav class="tab-navigation">
             <a class="tab-item active" data-section="dashboard">📊 <span>儀表板</span></a>
-            <a class="tab-item" data-section="upload">📤 <span>上傳文章與題目</span></a>
+            <a class="tab-item" data-section="upload-english">📤 <span>上傳英文文章</span></a>
+            <a class="tab-item" data-section="upload-chemistry">📤 <span>上傳化學文章</span></a>
             <a class="tab-item" data-section="edit-questions">✏️ <span>題目修改</span></a>
             <a class="tab-item" data-section="leaderboard">🏆 <span>排行榜管理</span></a>
         </nav>
@@ -691,52 +692,57 @@
                 <!-- This div is a container for either the welcome setup or the main dashboard -->
             </div>
 
-            <!-- 上傳文章與題目 -->
-            <div id="upload-section" class="content-section hidden">
+            <!-- 上傳英文文章 -->
+            <div id="upload-english-section" class="content-section hidden">
                 <div class="section-header">
-                    <h2 class="section-title">上傳文章與題目</h2>
+                    <h2 class="section-title">📤 上傳英文文章</h2>
                 </div>
                 <div class="section-content">
                     <div class="upload-grid">
                         <!-- AI Assistant Section -->
                         <div>
-                            <h3 class="form-label" style="font-size: 1.2rem; margin-bottom: 1.5rem; display:flex; align-items:center; gap: 0.5rem;">🤖 AI 輔助工具</h3>
+                            <h3 class="form-label" style="font-size: 1.2rem; margin-bottom: 1.5rem; display:flex; align-items:center; gap: 0.5rem;">🤖 AI 輔助工具 (英文)</h3>
                             <div class="form-group">
-                                <label for="aiArticleContent" class="form-label">1. 貼上文章內容</label>
-                                <textarea id="aiArticleContent" class="form-textarea" rows="8" placeholder="在此貼上純英文文章內容..."></textarea>
+                                <label for="aiArticleContent_english" class="form-label">1. 貼上英文文章內容</label>
+                                <textarea id="aiArticleContent_english" class="form-textarea" rows="8" placeholder="在此貼上純文字文章內容..."></textarea>
                             </div>
                             <div class="form-group">
-                                <label for="aiArticleDifficulty" class="form-label">2. 選擇文章難度</label>
-                                <select id="aiArticleDifficulty" class="form-select">
+                                <label for="aiArticleDifficulty_english" class="form-label">2. 選擇文章難度</label>
+                                <select id="aiArticleDifficulty_english" class="form-select">
                                     <option value="intermediate" selected>Intermediate (中級)</option>
                                     <option value="basic">Basic (初級)</option>
                                     <option value="advanced">Advanced (高級)</option>
                                 </select>
                             </div>
                             <div class="form-group">
-                                <label for="aiArticleCategory" class="form-label">3. 輸入文章分類</label>
-                                <input type="text" id="aiArticleCategory" class="form-input" value="technology" placeholder="例如：technology, science...">
+                                <label for="aiArticleCategory_english" class="form-label">3. 輸入文章分類</label>
+                                <input type="text" id="aiArticleCategory_english" class="form-input" value="technology" placeholder="例如：technology, science...">
                             </div>
-                            <button class="btn btn-ai" id="aiGenerateBtn">
-                                <span class="loading hidden" id="aiLoading"></span>
-                                ✨ 4. 使用 AI 生成 JSON
+                            <div class="form-group">
+                                <label for="aiArticleTime_english" class="form-label">4. 設定測驗時間 (分鐘)</label>
+                                <input type="number" id="aiArticleTime_english" class="form-input" value="5" min="1">
+                            </div>
+                            <button class="btn btn-ai" id="aiGenerateBtn_english">
+                                <span class="loading hidden"></span>
+                                ✨ 5. 使用 AI 生成 JSON
                             </button>
                              <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 1rem;">AI 將根據文章內容，自動生成標題、ID、5個選擇題(包含是非題)，並填入下方 JSON 內容區塊。</p>
                         </div>
 
                         <div>
-                            <label class="form-label">JSON 格式範本</label>
+                            <label class="form-label">英文 JSON 格式範本</label>
                             <div class="json-template">
-                            <button class="btn copy-btn" id="copyTemplateBtn">複製</button>
-<pre id="jsonTemplateContent">
+                            <button class="btn copy-btn" id="copyTemplateBtn_english">複製</button>
+<pre id="jsonTemplateContent_english">
 {
   "article": {
     "id": "unique_article_id",
+    "subject": "english",
     "title": "Article Title Here",
     "content": "Full article content...",
     "difficulty": "由上方『文章難度』表單決定",
     "category": "由上方『文章分類』表單決定",
-    "estimatedReadingTime": 5,
+    "estimatedReadingTime": "由上方『測驗時間』表單決定",
     "isActive": true
   },
   "questions": [
@@ -746,7 +752,9 @@
       "type": "multiple_choice",
       "options": [
         {"text": "Option A", "isCorrect": false},
-        {"text": "Option B", "isCorrect": true}
+        {"text": "Option B", "isCorrect": true},
+        {"text": "Option C", "isCorrect": false},
+        {"text": "Option D", "isCorrect": false}
       ],
       "explanation": "Explanation here.",
       "difficulty": "medium",
@@ -764,13 +772,102 @@
                      <div>
                         <div class="form-group">
                             <label class="form-label">文章與題目 JSON 內容 (可手動修改 AI 生成的結果)</label>
-                            <textarea id="jsonUploadContent" class="form-textarea" rows="20" placeholder="AI 生成的 JSON 將顯示在此處..."></textarea>
+                            <textarea id="jsonUploadContent_english" class="form-textarea" rows="20" placeholder="AI 生成的 JSON 將顯示在此處..."></textarea>
                         </div>
-                        <button class="btn btn-success" id="uploadJsonBtn">
-                            <span class="loading hidden" id="uploadLoading"></span>
+                        <button class="btn btn-success" id="uploadJsonBtn_english">
+                            <span class="loading hidden"></span>
                             📤 上傳到 Firebase
                         </button>
-                        <div id="uploadStatus" class="upload-status"></div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 上傳化學文章 -->
+            <div id="upload-chemistry-section" class="content-section hidden">
+                <div class="section-header">
+                    <h2 class="section-title">📤 上傳化學文章</h2>
+                </div>
+                <div class="section-content">
+                    <div class="upload-grid">
+                        <!-- AI Assistant Section -->
+                        <div>
+                            <h3 class="form-label" style="font-size: 1.2rem; margin-bottom: 1.5rem; display:flex; align-items:center; gap: 0.5rem;">🤖 AI 輔助工具 (化學)</h3>
+                            <div class="form-group">
+                                <label for="aiArticleContent_chemistry" class="form-label">1. 貼上化學文章內容</label>
+                                <textarea id="aiArticleContent_chemistry" class="form-textarea" rows="8" placeholder="在此貼上純文字文章內容..."></textarea>
+                            </div>
+                            <div class="form-group">
+                                <label for="aiArticleDifficulty_chemistry" class="form-label">2. 選擇文章難度</label>
+                                <select id="aiArticleDifficulty_chemistry" class="form-select">
+                                    <option value="basic" selected>Basic (初級)</option>
+                                    <option value="intermediate">Intermediate (中級)</option>
+                                    <option value="advanced">Advanced (高級)</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="aiArticleCategory_chemistry" class="form-label">3. 輸入化學主題</label>
+                                <input type="text" id="aiArticleCategory_chemistry" class="form-input" value="有機化學" placeholder="例如：有機化學, 週期表...">
+                            </div>
+                             <div class="form-group">
+                                <label for="aiArticleTime_chemistry" class="form-label">4. 設定測驗時間 (分鐘)</label>
+                                <input type="number" id="aiArticleTime_chemistry" class="form-input" value="3" min="1">
+                            </div>
+                            <button class="btn btn-ai" id="aiGenerateBtn_chemistry">
+                                <span class="loading hidden"></span>
+                                ✨ 5. 使用 AI 生成 JSON
+                            </button>
+                             <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 1rem;">AI 將根據文章內容，自動生成標題、ID、5個選擇題(包含是非題)，並填入下方 JSON 內容區塊。</p>
+                        </div>
+
+                        <div>
+                            <label class="form-label">化學 JSON 格式範本</label>
+                            <div class="json-template">
+                            <button class="btn copy-btn" id="copyTemplateBtn_chemistry">複製</button>
+<pre id="jsonTemplateContent_chemistry">
+{
+  "article": {
+    "id": "chem_periodic_table_basics",
+    "subject": "chemistry",
+    "title": "週期表入門",
+    "content": "週期表是化學的核心工具，它根據原子序數排列化學元素...",
+    "difficulty": "由上方『文章難度』表單決定",
+    "category": "由上方『化學主題』表單決定",
+    "estimatedReadingTime": "由上方『測驗時間』表單決定",
+    "isActive": true
+  },
+  "questions": [
+    {
+      "questionNumber": 1,
+      "question": "週期表中的元素是根據什麼來排列的？",
+      "type": "multiple_choice",
+      "options": [
+        {"text": "原子量", "isCorrect": false},
+        {"text": "原子序數", "isCorrect": true},
+        {"text": "字母順序", "isCorrect": false},
+        {"text": "發現年份", "isCorrect": false}
+      ],
+      "explanation": "現代週期表中的元素是按照原子序數（質子數）的增加順序排列的。",
+      "difficulty": "easy",
+      "isActive": true
+    }
+  ]
+}
+</pre>
+                            </div>
+                        </div>
+                    </div>
+
+                    <hr style="border-color: var(--border-color); margin: 2rem 0;">
+
+                     <div>
+                        <div class="form-group">
+                            <label class="form-label">文章與題目 JSON 內容 (可手動修改 AI 生成的結果)</label>
+                            <textarea id="jsonUploadContent_chemistry" class="form-textarea" rows="20" placeholder="AI 生成的 JSON 將顯示在此處..."></textarea>
+                        </div>
+                        <button class="btn btn-success" id="uploadJsonBtn_chemistry">
+                            <span class="loading hidden"></span>
+                            📤 上傳到 Firebase
+                        </button>
                     </div>
                 </div>
             </div>
@@ -782,6 +879,13 @@
                 </div>
                 <div class="section-content">
                     <div class="form-group" style="display: flex; align-items: center; gap: 1rem; flex-wrap: wrap;">
+                        <div style="min-width: 200px;">
+                            <label for="editSubjectSelect" class="form-label">選擇科目</label>
+                            <select class="form-select" id="editSubjectSelect">
+                                <option value="english">📚 英文</option>
+                                <option value="chemistry">🧪 化學</option>
+                            </select>
+                        </div>
                         <div style="flex-grow: 1;">
                             <label for="articleSelectForEdit" class="form-label">選擇文章</label>
                             <select class="form-select" id="articleSelectForEdit"></select>
@@ -806,9 +910,17 @@
             <div id="leaderboard-section" class="content-section hidden">
                 <div class="section-header">
                     <h2 class="section-title">排行榜管理</h2>
-                    <button class="btn btn-danger" id="clearLeaderboardBtn">
-                        🗑️ 清除排行榜
-                    </button>
+                    <div style="display: flex; gap: 1rem; align-items: center;">
+                        <div class="form-group" style="margin-bottom: 0; min-width: 200px;">
+                             <select class="form-select" id="leaderboardSubjectSelect">
+                                <option value="english">📚 英文排行榜</option>
+                                <option value="chemistry">🧪 化學排行榜</option>
+                            </select>
+                        </div>
+                        <button class="btn btn-danger" id="clearLeaderboardBtn">
+                            🗑️ 清除此科目分數
+                        </button>
+                    </div>
                 </div>
                 <div class="section-content">
                     <div class="form-group" style="max-width: 400px; margin-bottom: 1rem;">
@@ -816,10 +928,8 @@
                     </div>
                      <div style="overflow-x: auto;">
                         <table class="data-table">
-                            <thead>
-                                <tr>
-                                    <th>排名</th><th>暱稱</th><th>總分</th><th>測驗次數</th><th>操作</th>
-                                </tr>
+                            <thead id="leaderboard-table-head">
+                                <!-- Header generated by JS -->
                             </thead>
                             <tbody id="leaderboard-table"></tbody>
                         </table>
@@ -882,7 +992,11 @@
                 sessions: { lastVisible: null, allLoaded: false },
                 leaderboard: { lastVisible: null, allLoaded: false, users: [] }
             },
-            editQuestionId: null
+            editQuestionId: null,
+            subjects: {
+                english: { name: '英文', icon: '📚' },
+                chemistry: { name: '化學', icon: '🧪' },
+            }
         };
 
         // --- UI Module ---
@@ -954,37 +1068,41 @@
         // --- Firebase API Module ---
         const api = {
             async getStats() {
-                const articlesPromise = state.db.collection('articles').limit(1).get();
-                const usersPromise = state.db.collection('leaderboard').limit(1).get();
-                const sessionsPromise = state.db.collection('test-sessions').limit(1).get();
-                 
-                const articlesCountPromise = state.db.collection('articles').get().then(snap => snap.size);
-                const usersCountPromise = state.db.collection('leaderboard').get().then(snap => snap.size);
-                const sessionsCountPromise = state.db.collection('test-sessions').get().then(snap => snap.size);
-
-
-                const [articles, users, sessions, articlesCount, usersCount, sessionsCount] = await Promise.all([
-                    articlesPromise, usersPromise, sessionsPromise,
-                    articlesCountPromise, usersCountPromise, sessionsCountPromise
-                ]);
+                const globalUsersPromise = state.db.collection('leaderboard').get().then(snap => snap.size);
                 
-                let avgScore = 'N/A';
-                if (!sessions.empty) {
-                    const allSessions = await state.db.collection('test-sessions').get();
-                    const totalScore = allSessions.docs.reduce((sum, doc) => sum + (doc.data().score || 0), 0);
-                    avgScore = sessionsCount > 0 ? `${(totalScore / sessionsCount).toFixed(1)}%` : 'N/A';
+                let subjectStats = {};
+                for (const subjectId in state.subjects) {
+                    const articlesPromise = state.db.collection('articles').where('subject', '==', subjectId).get();
+                    const sessionsPromise = state.db.collection('test-sessions').where('subject', '==', subjectId).get();
+                    
+                    const [articlesSnap, sessionsSnap] = await Promise.all([articlesPromise, sessionsPromise]);
+                    
+                    let avgScore = 'N/A';
+                    if (!sessionsSnap.empty) {
+                        const totalScore = sessionsSnap.docs.reduce((sum, doc) => sum + (doc.data().score || 0), 0);
+                        avgScore = sessionsSnap.size > 0 ? `${(totalScore / sessionsSnap.size).toFixed(1)}%` : 'N/A';
+                    }
+                    
+                    subjectStats[subjectId] = {
+                        articles: articlesSnap.size,
+                        sessions: sessionsSnap.size,
+                        avgScore: avgScore
+                    };
                 }
 
+                const [usersCount] = await Promise.all([globalUsersPromise]);
+
                 return {
-                    articles: articlesCount,
-                    users: usersCount,
-                    sessions: sessionsCount,
-                    avgScore: avgScore,
-                    isEmpty: articles.empty && users.empty
+                    subjects: subjectStats,
+                    totalUsers: usersCount,
+                    isEmpty: Object.values(subjectStats).every(s => s.articles === 0)
                 };
             },
-            async getRecentSessions(lastVisible = null) {
-                let query = state.db.collection('test-sessions').orderBy('timestamp', 'desc').limit(10);
+            async getRecentSessions(subject, lastVisible = null) {
+                let query = state.db.collection('test-sessions')
+                    .where('subject', '==', subject)
+                    .orderBy('timestamp', 'desc')
+                    .limit(10);
                 if (lastVisible) query = query.startAfter(lastVisible);
                 const snapshot = await query.get();
                 return {
@@ -993,9 +1111,29 @@
                     allLoaded: snapshot.empty
                 };
             },
-            async getArticles() {
-                const snapshot = await state.db.collection('articles').orderBy('createdAt', 'desc').get();
-                return snapshot.docs;
+            async getArticles(subject) {
+                let snapshot;
+                if (subject === 'english') {
+                    // For English, fetch all articles to include legacy ones (without subject field).
+                    snapshot = await state.db.collection('articles').get();
+                } else {
+                    // For other subjects, query specifically.
+                    snapshot = await state.db.collection('articles').where('subject', '==', subject).get();
+                }
+                
+                let docs = snapshot.docs;
+                
+                // If English, perform client-side filtering to include legacy articles.
+                if (subject === 'english') {
+                    docs = docs.filter(doc => {
+                        const data = doc.data();
+                        return data.subject === 'english' || data.subject === undefined;
+                    });
+                }
+
+                // Perform sorting on the client-side for all cases.
+                docs.sort((a, b) => (b.data().createdAt?.toMillis() || 0) - (a.data().createdAt?.toMillis() || 0));
+                return docs;
             },
             async getQuestions(articleId) {
                 const query = state.db.collection('questions').where('articleId', '==', articleId);
@@ -1005,8 +1143,10 @@
                 docs.sort((a, b) => (a.data().questionNumber || 0) - (b.data().questionNumber || 0));
                 return docs;
             },
-            async getLeaderboard(lastVisible = null) {
-                let query = state.db.collection('leaderboard').orderBy('totalScore', 'desc').limit(20);
+            async getLeaderboard(subject, lastVisible = null) {
+                let query = state.db.collection('leaderboard')
+                    .orderBy(`totalScore_${subject}`, 'desc')
+                    .limit(20);
                 if (lastVisible) query = query.startAfter(lastVisible);
                 const snapshot = await query.get();
                 return {
@@ -1039,14 +1179,26 @@
                 document.getElementById('logoutBtn').addEventListener('click', () => {
                     ui.showConfirmation('登出', '您確定要登出管理後台嗎？', () => state.auth.signOut());
                 });
-                document.getElementById('uploadJsonBtn').addEventListener('click', this.handleUpload);
-                document.getElementById('copyTemplateBtn').addEventListener('click', this.copyJsonTemplate);
+
+                // Upload Listeners
+                document.getElementById('uploadJsonBtn_english').addEventListener('click', () => this.handleUpload('english'));
+                document.getElementById('uploadJsonBtn_chemistry').addEventListener('click', () => this.handleUpload('chemistry'));
+                document.getElementById('copyTemplateBtn_english').addEventListener('click', () => this.copyJsonTemplate('english'));
+                document.getElementById('copyTemplateBtn_chemistry').addEventListener('click', () => this.copyJsonTemplate('chemistry'));
+
+                // Edit Listeners
+                document.getElementById('editSubjectSelect').addEventListener('change', this.loadArticlesForSelection);
                 document.getElementById('articleSelectForEdit').addEventListener('change', this.loadQuestionsForEdit);
                 document.getElementById('deleteArticleBtn').addEventListener('click', () => this.confirmDeleteArticle());
                 document.getElementById('saveQuestionBtn').addEventListener('click', this.handleEditQuestion);
+
+                // Leaderboard Listeners
+                document.getElementById('leaderboardSubjectSelect').addEventListener('change', () => this.loadLeaderboardData());
                 document.getElementById('clearLeaderboardBtn').addEventListener('click', this.confirmClearLeaderboard);
                 document.getElementById('leaderboardSearchInput').addEventListener('input', this.handleLeaderboardSearch);
-                 document.getElementById('loadMoreLeaderboardBtn').addEventListener('click', () => this.loadLeaderboardData(true));
+                document.getElementById('loadMoreLeaderboardBtn').addEventListener('click', () => this.loadLeaderboardData(true));
+                
+                // Modal Listeners
                 document.querySelectorAll('.modal').forEach(modal => {
                     modal.addEventListener('click', e => {
                         if (e.target === modal || e.target.classList.contains('modal-close') || e.target.classList.contains('modal-close-btn')) {
@@ -1090,32 +1242,12 @@
                     case 'dashboard': this.loadDashboardData(); break;
                     case 'edit-questions': this.loadArticlesForSelection(); break;
                     case 'leaderboard': this.loadLeaderboardData(); break;
-                    case 'upload': /* No initial data loading needed */ break;
+                    case 'upload-english': /* No initial data loading needed */ break;
+                    case 'upload-chemistry': /* No initial data loading needed */ break;
                 }
             },
             
-            async loadDashboardData(loadMore = false) {
-                 if (loadMore) { // This function is for loading more sessions, not the whole dashboard
-                    const loadBtn = document.getElementById('loadMoreSessionsBtn');
-                    if (!loadBtn) return;
-                    ui.setLoading(loadBtn, true);
-                    try {
-                        const { docs, lastVisible, allLoaded } = await api.getRecentSessions(state.pagination.sessions.lastVisible);
-                        const table = document.getElementById('recentSessionsTable');
-                        if (docs.length > 0) {
-                            docs.forEach(doc => {
-                                const s = doc.data();
-                                table.innerHTML += `<tr id="session-row-${doc.id}"><td>${s.timestamp.toDate().toLocaleString()}</td><td>${s.nickname}</td><td>${s.articleTitle}</td><td>${s.score}%</td><td><a href="test_result_analyzer.html?sessionId=${doc.id}" target="_blank" class="btn btn-secondary" style="padding:0.4rem 0.8rem;font-size:0.8rem;">分析</a><button class="btn btn-danger" style="padding:0.4rem 0.8rem; margin-left:0.5rem" onclick="handlers.confirmDeleteSession('${doc.id}')">刪除</button></td></tr>`;
-                            });
-                            state.pagination.sessions.lastVisible = lastVisible;
-                        }
-                        state.pagination.sessions.allLoaded = allLoaded || docs.length < 10;
-                        loadBtn.classList.toggle('hidden', state.pagination.sessions.allLoaded);
-                    } catch(e) { ui.showNotification('載入測驗記錄失敗: ' + e.message, 'error'); }
-                    finally { ui.setLoading(loadBtn, false); }
-                    return;
-                }
-
+            async loadDashboardData() {
                 ui.dashboardSection.innerHTML = `<div class="spinner" style="margin: 4rem auto;"></div>`;
 
                 try {
@@ -1132,33 +1264,33 @@
                                 </button>
                             </div>`;
                         document.getElementById('generateSampleDataBtn').addEventListener('click', () => this.handleGenerateSampleData());
-                    } else {
-                        ui.dashboardSection.innerHTML = `
-                            <div class="stats-grid" id="statsGrid">
-                                <div class="stat-card"><div class="stat-header"><div><div class="stat-value">${stats.articles}</div><div class="stat-label">總文章數</div></div><div class="stat-icon success">📚</div></div></div>
-                                <div class="stat-card"><div class="stat-header"><div><div class="stat-value">${stats.users}</div><div class="stat-label">總答題人數</div></div><div class="stat-icon info">👥</div></div></div>
-                                <div class="stat-card"><div class="stat-header"><div><div class="stat-value">${stats.sessions.toLocaleString()}</div><div class="stat-label">總測驗次數</div></div><div class="stat-icon warning">📝</div></div></div>
-                                <div class="stat-card"><div class="stat-header"><div><div class="stat-value">${stats.avgScore}</div><div class="stat-label">平均正確率</div></div><div class="stat-icon primary">📊</div></div></div>
-                            </div>
-                            <div class="content-section">
-                                <div class="section-header">
-                                    <h2 class="section-title">最近測驗記錄</h2>
-                                </div>
-                                <div class="section-content" style="overflow-x: auto;">
-                                    <table class="data-table">
-                                        <thead><tr><th>時間</th><th>用戶</th><th>文章</th><th>分數</th><th>操作</th></tr></thead>
-                                        <tbody id="recentSessionsTable"></tbody>
-                                    </table>
-                                </div>
-                                <div class="pagination-controls">
-                                    <button class="btn btn-secondary" id="loadMoreSessionsBtn">載入更多</button>
-                                </div>
-                            </div>
-                        `;
-                        state.pagination.sessions = { lastVisible: null, allLoaded: false };
-                        document.getElementById('loadMoreSessionsBtn').addEventListener('click', () => this.loadDashboardData(true));
-                        await this.loadDashboardData(true); // Load initial sessions
+                        return;
                     }
+                    
+                    let dashboardHtml = `<div class="content-section"><div class="section-header"><h2 class="section-title">📊 總覽</h2></div>
+                        <div class="section-content">
+                            <div class="stat-card" style="max-width: 300px;"><div class="stat-header"><div><div class="stat-value">${stats.totalUsers}</div><div class="stat-label">總註冊用戶</div></div><div class="stat-icon info">👥</div></div></div>
+                        </div></div>`;
+
+                    for (const subjectId in stats.subjects) {
+                        const subjectData = stats.subjects[subjectId];
+                        const subjectInfo = state.subjects[subjectId];
+                        dashboardHtml += `
+                        <div class="content-section">
+                             <div class="section-header">
+                                <h2 class="section-title">${subjectInfo.icon} ${subjectInfo.name}數據</h2>
+                            </div>
+                            <div class="section-content">
+                                <div class="stats-grid">
+                                    <div class="stat-card"><div class="stat-header"><div><div class="stat-value">${subjectData.articles}</div><div class="stat-label">總文章數</div></div><div class="stat-icon success">📚</div></div></div>
+                                    <div class="stat-card"><div class="stat-header"><div><div class="stat-value">${subjectData.sessions.toLocaleString()}</div><div class="stat-label">總測驗次數</div></div><div class="stat-icon warning">📝</div></div></div>
+                                    <div class="stat-card"><div class="stat-header"><div><div class="stat-value">${subjectData.avgScore}</div><div class="stat-label">平均正確率</div></div><div class="stat-icon primary">🎯</div></div></div>
+                                </div>
+                            </div>
+                        </div>`;
+                    }
+                    ui.dashboardSection.innerHTML = dashboardHtml;
+
                 } catch (e) {
                     console.error("Dashboard loading error:", e);
                     ui.dashboardSection.innerHTML = `<div style="color:var(--error-color); padding: 2rem;">載入儀表板失敗: ${e.message}</div>`;
@@ -1166,25 +1298,32 @@
                 }
             },
 
-            async handleUpload() {
-                const jsonContent = document.getElementById('jsonUploadContent').value;
+            async handleUpload(subject) {
+                const jsonContent = document.getElementById(`jsonUploadContent_${subject}`).value;
                 if (!jsonContent.trim()) return ui.showNotification('JSON 內容不可為空', 'error');
 
-                const btn = document.getElementById('uploadJsonBtn');
+                const btn = document.getElementById(`uploadJsonBtn_${subject}`);
                 ui.setLoading(btn, true);
 
                 try {
                     const data = JSON.parse(jsonContent);
                     if (!data.article || !data.questions) throw new Error('JSON 格式錯誤，缺少 article 或 questions 屬性。');
+                    
+                    const articleDifficulty = document.getElementById(`aiArticleDifficulty_${subject}`).value;
+                    const articleCategory = document.getElementById(`aiArticleCategory_${subject}`).value.trim();
+                    const testTime = parseInt(document.getElementById(`aiArticleTime_${subject}`).value, 10);
 
-                    // Automatically apply form values to the JSON data
-                    const articleDifficulty = document.getElementById('aiArticleDifficulty').value;
-                    const articleCategory = document.getElementById('aiArticleCategory').value.trim();
                     if (!articleCategory) {
-                        throw new Error('請務必在表單中輸入「文章分類」。');
+                        throw new Error('請務必在表單中輸入「文章分類/主題」。');
                     }
+                    if (isNaN(testTime) || testTime < 1) {
+                        throw new Error('請設定有效的測驗時間（至少1分鐘）。');
+                    }
+                    
+                    data.article.subject = subject;
                     data.article.difficulty = articleDifficulty;
                     data.article.category = articleCategory;
+                    data.article.estimatedReadingTime = testTime;
 
                     const batch = state.db.batch();
                     const articleRef = state.db.collection('articles').doc(data.article.id);
@@ -1195,7 +1334,7 @@
                     });
                     await batch.commit();
 
-                    document.getElementById('jsonUploadContent').value = '';
+                    document.getElementById(`jsonUploadContent_${subject}`).value = '';
                     ui.showNotification(`成功新增文章及 ${data.questions.length} 個題目`, 'success');
                 } catch (error) { 
                     ui.showNotification(`上傳失敗: ${error.message}`, 'error'); 
@@ -1204,19 +1343,32 @@
                 }
             },
             
-            copyJsonTemplate() {
-                const content = document.getElementById('jsonTemplateContent').innerText;
+            copyJsonTemplate(subject) {
+                const content = document.getElementById(`jsonTemplateContent_${subject}`).innerText;
                 navigator.clipboard.writeText(content).then(() => ui.showNotification('範本已複製!', 'success'));
             },
 
             async loadArticlesForSelection() {
+                const subject = document.getElementById('editSubjectSelect').value;
                 const selectEl = document.getElementById('articleSelectForEdit');
                 selectEl.innerHTML = '<option value="">載入中...</option>';
+                document.getElementById('questions-table').innerHTML = '';
+                document.getElementById('deleteArticleBtn').disabled = true;
+
                 try {
-                    const docs = await api.getArticles();
-                    selectEl.innerHTML = '<option value="">請選擇文章</option>';
-                    docs.forEach(doc => selectEl.innerHTML += `<option value="${doc.id}">${doc.data().title}</option>`);
-                } catch(e) { ui.showNotification('載入文章列表失敗: ' + e.message, 'error'); }
+                    const docs = await api.getArticles(subject);
+                    if (docs.length === 0) {
+                         selectEl.innerHTML = '<option value="">此科目尚無文章</option>';
+                    } else {
+                        selectEl.innerHTML = '<option value="">請選擇文章</option>';
+                        docs.forEach(doc => selectEl.innerHTML += `<option value="${doc.id}">${doc.data().title}</option>`);
+                    }
+                } catch(e) {
+                    console.error("Error loading articles for edit:", e);
+                    const userMessage = '載入文章列表失敗: ' + e.message;
+                    selectEl.innerHTML = `<option value="">讀取失敗</option>`;
+                    ui.showNotification(userMessage, 'error');
+                }
             },
             
             async loadQuestionsForEdit() {
@@ -1379,25 +1531,14 @@
                 }
             },
 
-            confirmDeleteSession(sessionId) {
-                ui.showConfirmation('刪除測驗記錄', '您確定要刪除這筆測驗記錄嗎？此操作無法復原。', () => this.deleteSession(sessionId));
-            },
-
-            async deleteSession(sessionId) {
-                try {
-                    await state.db.collection('test-sessions').doc(sessionId).delete();
-                    ui.showNotification('測驗記錄已刪除', 'success');
-                    const row = document.getElementById(`session-row-${sessionId}`);
-                    if (row) {
-                        row.remove();
-                    }
-                } catch (e) {
-                    ui.showNotification(`刪除失敗: ${e.message}`, 'error');
-                }
-            },
-
             async loadLeaderboardData(loadMore = false) {
                 const loadBtn = document.getElementById('loadMoreLeaderboardBtn');
+                const subject = document.getElementById('leaderboardSubjectSelect').value;
+                const subjectName = state.subjects[subject].name;
+                
+                document.getElementById('leaderboard-table-head').innerHTML = `
+                    <tr><th>排名</th><th>暱稱</th><th>${subjectName}總分</th><th>${subjectName}測驗次數</th><th>操作</th></tr>`;
+                
                 if (!loadBtn) return;
                 ui.setLoading(loadBtn, true);
 
@@ -1408,14 +1549,10 @@
                 }
 
                 try {
-                    const { docs, lastVisible, allLoaded } = await api.getLeaderboard(state.pagination.leaderboard.lastVisible);
+                    const { docs, lastVisible, allLoaded } = await api.getLeaderboard(subject, state.pagination.leaderboard.lastVisible);
                     state.pagination.leaderboard.users.push(...docs);
                     
-                    if (!loadMore) {
-                       this.renderLeaderboard(state.pagination.leaderboard.users); 
-                    } else {
-                       this.renderLeaderboard(docs, true); // Append
-                    }
+                    this.renderLeaderboard(docs, subject, !loadMore);
                     
                     state.pagination.leaderboard.lastVisible = lastVisible;
                     state.pagination.leaderboard.allLoaded = allLoaded || docs.length < 20;
@@ -1424,12 +1561,18 @@
                 finally { ui.setLoading(loadBtn, false); }
             },
 
-            renderLeaderboard(users, append = false) {
+            renderLeaderboard(users, subject, clear) {
                 const table = document.getElementById('leaderboard-table');
-                if (!append) table.innerHTML = '';
-                const baseRank = append ? table.rows.length : 0;
+                if (clear) table.innerHTML = '';
+                const baseRank = clear ? 0 : table.rows.length;
                 users.forEach((user, index) => {
-                    table.innerHTML += `<tr data-nickname="${user.nickname.toLowerCase()}"><td>${baseRank + index + 1}</td><td>${user.nickname}</td><td>${user.totalScore || 0}</td><td>${user.testsCompleted || 0}</td><td><button class="btn btn-danger" style="padding:0.4rem 0.8rem" onclick="handlers.confirmRemoveUser('${user.id}','${user.nickname}')">移除</button></td></tr>`;
+                    table.innerHTML += `<tr data-nickname="${user.nickname.toLowerCase()}">
+                        <td>${baseRank + index + 1}</td>
+                        <td>${user.nickname}</td>
+                        <td>${user[`totalScore_${subject}`] || 0}</td>
+                        <td>${user[`testsCompleted_${subject}`] || 0}</td>
+                        <td><button class="btn btn-danger" style="padding:0.4rem 0.8rem" onclick="handlers.confirmRemoveUser('${user.id}','${user.nickname}')">移除用戶</button></td>
+                    </tr>`;
                 });
             },
             
@@ -1442,21 +1585,29 @@
             },
 
             confirmClearLeaderboard() {
-                ui.showConfirmation('清除排行榜', '確定要清除整個排行榜？此操作無法復原。', async () => {
+                const subject = document.getElementById('leaderboardSubjectSelect').value;
+                const subjectName = state.subjects[subject].name;
+                ui.showConfirmation('清除分數', `確定要清除所有用戶的「${subjectName}」分數和測驗記錄嗎？此操作無法復原。`, async () => {
                     ui.showNotification('正在清除...', 'warning');
                     try {
-                        const snapshot = await state.db.collection('leaderboard').limit(500).get();
+                        const snapshot = await state.db.collection('leaderboard').get();
                         const batch = state.db.batch();
-                        snapshot.docs.forEach(doc => batch.delete(doc.ref));
+                        snapshot.docs.forEach(doc => {
+                             const updates = {};
+                             updates[`totalScore_${subject}`] = 0;
+                             updates[`testsCompleted_${subject}`] = 0;
+                             updates[`rank_${subject}`] = '新手級';
+                             batch.update(doc.ref, updates);
+                        });
                         await batch.commit();
-                        ui.showNotification('排行榜已清除！', 'success');
+                        ui.showNotification(`${subjectName}分數已清除！`, 'success');
                         this.loadLeaderboardData();
                     } catch (e) { ui.showNotification('清除失敗', 'error'); }
                 });
             },
             
             confirmRemoveUser(userId, nickname) {
-                 ui.showConfirmation('移除用戶', `確定要從排行榜移除 "${nickname}" 嗎？`, async () => {
+                 ui.showConfirmation('移除用戶', `確定要從系統中移除用戶 "${nickname}" 嗎？這會刪除他在所有科目的成績。`, async () => {
                     try {
                         await state.db.collection('leaderboard').doc(userId).delete();
                         ui.showNotification(`用戶 ${nickname} 已移除！`, 'success');
@@ -1474,16 +1625,17 @@
                     const batch = state.db.batch();
                     const now = firebase.firestore.FieldValue.serverTimestamp();
 
-                    // Sample Articles and Questions
-                    const sampleArticle1 = { id: 'tech_future_ai', title: 'The Future of Artificial Intelligence', content: 'AI is rapidly evolving...', difficulty: 'intermediate', category: 'technology', estimatedReadingTime: 5, questionCount: 2, createdAt: now, isActive: true };
+                    // Sample English Article
+                    const sampleArticle1 = { id: 'tech_future_ai', subject: 'english', title: 'The Future of Artificial Intelligence', content: 'AI is rapidly evolving...', difficulty: 'intermediate', category: 'technology', estimatedReadingTime: 5, questionCount: 2, createdAt: now, isActive: true };
                     const questions1 = [
                         { articleId: 'tech_future_ai', question: 'What is the main topic?', options: [{text: 'AI evolution', isCorrect: true}, {text: 'Robots', isCorrect: false}], type: 'multiple_choice', explanation: 'The text focuses on AI.', difficulty: 'easy', isActive: true, questionNumber: 1, createdAt: now },
                         { articleId: 'tech_future_ai', question: 'Is AI development slow?', options: [{text: 'True', isCorrect: false}, {text: 'False', isCorrect: true}], type: 'true_false', explanation: 'The text states it is rapidly evolving.', difficulty: 'easy', isActive: true, questionNumber: 2, createdAt: now },
                     ];
-                     const sampleArticle2 = { id: 'space_exploration_mars', title: 'Exploring the Red Planet: Mars', content: 'Humanitys fascination with Mars...', difficulty: 'advanced', category: 'science', estimatedReadingTime: 8, questionCount: 2, createdAt: now, isActive: true };
+                     // Sample Chemistry Article
+                    const sampleArticle2 = { id: 'chem_water_molecules', subject: 'chemistry', title: 'The Magic of Water Molecules', content: 'Water, or H2O, is essential for life...', difficulty: 'basic', category: '基礎化學', estimatedReadingTime: 4, questionCount: 2, createdAt: now, isActive: true };
                     const questions2 = [
-                        { articleId: 'space_exploration_mars', question: 'What planet is discussed?', options: [{text: 'Venus', isCorrect: false}, {text: 'Mars', isCorrect: true}], type: 'multiple_choice', explanation: 'The title and content mention Mars.', difficulty: 'easy', isActive: true, questionNumber: 1, createdAt: now },
-                        { articleId: 'space_exploration_mars', question: 'Is Mars exploration new?', options: [{text: 'True', isCorrect: false}, {text: 'False', isCorrect: true}], type: 'true_false', explanation: 'The text implies a long-standing fascination.', difficulty: 'medium', isActive: true, questionNumber: 2, createdAt: now },
+                        { articleId: 'chem_water_molecules', question: 'What is the chemical formula for water?', options: [{text: 'CO2', isCorrect: false}, {text: 'H2O', isCorrect: true}], type: 'multiple_choice', explanation: 'H2O represents two hydrogen atoms and one oxygen atom.', difficulty: 'easy', isActive: true, questionNumber: 1, createdAt: now },
+                        { articleId: 'chem_water_molecules', question: 'Water is not essential for life.', options: [{text: 'True', isCorrect: false}, {text: 'False', isCorrect: true}], type: 'true_false', explanation: 'The text states water is essential for life.', difficulty: 'easy', isActive: true, questionNumber: 2, createdAt: now },
                     ];
                     
                     batch.set(state.db.collection('articles').doc(sampleArticle1.id), sampleArticle1);
@@ -1493,19 +1645,12 @@
 
                     // Sample Leaderboard Users
                     const sampleUsers = [
-                        { id: 'user_alpha', data: { nickname: 'Alpha', totalScore: 185, rank: '高手級', testsCompleted: 2, achievements: ['first_test'], createdAt: now }},
-                        { id: 'user_beta', data: { nickname: 'Beta', totalScore: 95, rank: '新手級', testsCompleted: 1, achievements: ['first_test', 'perfect_score'], createdAt: now }},
-                        { id: 'user_gamma', data: { nickname: 'Gamma', totalScore: 70, rank: '新手級', testsCompleted: 1, achievements: [], createdAt: now }},
+                        { id: 'user_alpha', data: { nickname: 'Alpha', achievements: ['first_test'], createdAt: now, totalScore_english: 185, testsCompleted_english: 2, rank_english: '熟練級', totalScore_chemistry: 90, testsCompleted_chemistry: 1, rank_chemistry: '新手級' }},
+                        { id: 'user_beta', data: { nickname: 'Beta', achievements: ['first_test', 'perfect_score'], createdAt: now, totalScore_english: 95, testsCompleted_english: 1, rank_english: '新手級', totalScore_chemistry: 0, testsCompleted_chemistry: 0, rank_chemistry: '新手級' }},
+                        { id: 'user_gamma', data: { nickname: 'Gamma', achievements: [], createdAt: now, totalScore_english: 0, testsCompleted_english: 0, rank_english: '新手級', totalScore_chemistry: 100, testsCompleted_chemistry: 1, rank_chemistry: '新手級' }},
                     ];
                     sampleUsers.forEach(user => batch.set(state.db.collection('leaderboard').doc(user.id), user.data));
                     
-                    // Sample Test Sessions
-                    const sampleSessions = [
-                        { userId: 'user_alpha', nickname: 'Alpha', articleId: 'tech_future_ai', articleTitle: sampleArticle1.title, score: 90, completionTime: 250, timestamp: now, correctCount: 9, totalQuestions: 10, userAnswers: [], newAchievements:[] },
-                        { userId: 'user_beta', nickname: 'Beta', articleId: 'space_exploration_mars', articleTitle: sampleArticle2.title, score: 100, completionTime: 400, timestamp: now, correctCount: 10, totalQuestions: 10, userAnswers: [], newAchievements:['perfect_score'] },
-                    ];
-                    sampleSessions.forEach(session => batch.set(state.db.collection('test-sessions').doc(), session));
-
                     await batch.commit();
                     ui.showNotification('範例資料已成功建立！', 'success');
                     handlers.loadDashboardData(); // Refresh the dashboard view
@@ -1525,24 +1670,29 @@
     <script type="module">
         import { GoogleGenAI, Type } from "@google/genai";
 
-        const aiGenerateBtn = document.getElementById('aiGenerateBtn');
-        aiGenerateBtn.addEventListener('click', handleAIGenerate);
-
-        async function handleAIGenerate() {
-            const articleText = document.getElementById('aiArticleContent').value;
-            const articleDifficulty = document.getElementById('aiArticleDifficulty').value;
-            const articleCategory = document.getElementById('aiArticleCategory').value.trim().toLowerCase();
+        document.getElementById('aiGenerateBtn_english').addEventListener('click', () => handleAIGenerate('english'));
+        document.getElementById('aiGenerateBtn_chemistry').addEventListener('click', () => handleAIGenerate('chemistry'));
+        
+        async function handleAIGenerate(subject) {
+            const articleText = document.getElementById(`aiArticleContent_${subject}`).value;
+            const articleDifficulty = document.getElementById(`aiArticleDifficulty_${subject}`).value;
+            const articleCategory = document.getElementById(`aiArticleCategory_${subject}`).value.trim().toLowerCase();
+            const testTime = parseInt(document.getElementById(`aiArticleTime_${subject}`).value, 10);
+            const aiGenerateBtn = document.getElementById(`aiGenerateBtn_${subject}`);
 
             if (!articleText.trim()) {
                 ui.showNotification('請先貼上文章內容', 'warning');
                 return;
             }
             if (!articleCategory.trim()) {
-                ui.showNotification('請輸入文章分類', 'warning');
+                ui.showNotification('請輸入文章分類/主題', 'warning');
+                return;
+            }
+            if (isNaN(testTime) || testTime < 1) {
+                ui.showNotification('請設定有效的測驗時間（至少1分鐘）。', 'warning');
                 return;
             }
             
-            // Safely check for API key without crashing the browser
             try {
                 if (typeof process === 'undefined' || typeof process.env === 'undefined' || !process.env.API_KEY) {
                     throw new Error();
@@ -1563,11 +1713,12 @@
                             type: Type.OBJECT,
                             properties: {
                                 id: { type: Type.STRING, description: "A short, unique, snake_case string based on the title, max 20 chars." },
+                                subject: { type: Type.STRING, description: "Use the exact subject value provided in the prompt." },
                                 title: { type: Type.STRING, description: "A concise and engaging title for the article." },
                                 content: { type: Type.STRING, description: "The original article text provided by the user." },
                                 difficulty: { type: Type.STRING, description: "Use the exact difficulty value provided in the prompt." },
                                 category: { type: Type.STRING, description: "Use the exact category value provided in the prompt." },
-                                estimatedReadingTime: { type: Type.INTEGER, description: "An integer representing the estimated reading time in minutes." },
+                                estimatedReadingTime: { type: Type.INTEGER, description: "Use the exact reading time value provided in the prompt." },
                                 isActive: { type: Type.BOOLEAN, description: "Set to true." }
                             }
                         },
@@ -1604,7 +1755,7 @@
 
                 IMPORTANT INSTRUCTIONS:
                 - The 'content' field in the 'article' object MUST be the original, unmodified article text.
-                - For the 'article' object, you MUST use these exact values: difficulty: "${articleDifficulty}", category: "${articleCategory}".
+                - For the 'article' object, you MUST use these exact values: subject: "${subject}", difficulty: "${articleDifficulty}", category: "${articleCategory}", estimatedReadingTime: ${testTime}.
                 - Generate a mix of question types (e.g., 3 multiple-choice, 2 true/false).
 
                 Article Text:
@@ -1624,11 +1775,13 @@
                 const generatedJson = JSON.parse(response.text);
                 
                 // Override with user-defined values and original content as a safeguard
+                generatedJson.article.subject = subject;
                 generatedJson.article.difficulty = articleDifficulty;
                 generatedJson.article.category = articleCategory;
+                generatedJson.article.estimatedReadingTime = testTime;
                 generatedJson.article.content = articleText;
 
-                document.getElementById('jsonUploadContent').value = JSON.stringify(generatedJson, null, 2);
+                document.getElementById(`jsonUploadContent_${subject}`).value = JSON.stringify(generatedJson, null, 2);
                 ui.showNotification('AI 已成功生成 JSON！', 'success');
 
             } catch (error) {

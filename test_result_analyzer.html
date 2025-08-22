@@ -101,17 +101,11 @@
             font-size: 1.1rem;
         }
 
-        .analysis-grid {
+        .top-summary-grid {
             display: grid;
-            grid-template-columns: 2fr 1fr;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
             gap: 2rem;
-            margin-bottom: 2rem;
-        }
-
-        .main-analysis {
-            display: flex;
-            flex-direction: column;
-            gap: 2rem;
+            margin-bottom: 3rem;
         }
 
         .score-card {
@@ -183,12 +177,6 @@
             margin-top: 0.5rem;
         }
         
-        .sidebar {
-            display: flex;
-            flex-direction: column;
-            gap: 2rem;
-        }
-
         .achievements-card {
             background: var(--bg-card);
             border-radius: 1.5rem;
@@ -255,7 +243,6 @@
             border: 1px solid var(--border-color);
             backdrop-filter: blur(20px);
             overflow: hidden;
-            grid-column: 1 / -1;
         }
 
         .analysis-header {
@@ -280,7 +267,7 @@
 
         .question-analysis {
             margin-bottom: 2rem;
-            padding: 1.5rem;
+            padding: 2rem;
             background: rgba(255, 255, 255, 0.02);
             border-radius: 1rem;
             border-left: 4px solid var(--primary-color);
@@ -306,6 +293,7 @@
             font-weight: 600;
             line-height: 1.4;
             flex: 1;
+            font-size: 1.2rem;
         }
 
         .question-status {
@@ -330,7 +318,7 @@
             display: grid;
             grid-template-columns: 1fr 1fr;
             gap: 1rem;
-            margin: 1rem 0;
+            margin: 1.5rem 0;
         }
 
         .answer-box {
@@ -355,6 +343,9 @@
             margin-bottom: 0.5rem;
             text-transform: uppercase;
             letter-spacing: 0.05em;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
         }
 
         .answer-text {
@@ -366,7 +357,7 @@
             border: 1px solid var(--info-color);
             border-radius: 0.75rem;
             padding: 1rem;
-            margin-top: 1rem;
+            margin-top: 1.5rem;
         }
 
         .explanation-title {
@@ -443,8 +434,8 @@
             100% { transform: rotate(360deg); }
         }
 
-        @media (max-width: 1024px) {
-            .analysis-grid {
+        @media (max-width: 900px) {
+            .top-summary-grid {
                 grid-template-columns: 1fr;
             }
         }
@@ -453,24 +444,19 @@
             .container {
                 padding: 1rem;
             }
-
             .header h1 {
                 font-size: 2rem;
             }
-
             .score-display {
                 font-size: 3rem;
             }
-
             .score-details {
                 flex-direction: column;
                 gap: 1rem;
             }
-
             .action-buttons {
                 flex-direction: column;
             }
-
              .answer-comparison {
                 grid-template-columns: 1fr;
             }
@@ -522,54 +508,50 @@
             <p>深入分析您的答題表現，發現學習重點與改進方向</p>
         </header>
 
-        <div class="analysis-grid">
-            <div class="main-analysis">
-                <!-- 分數卡片 -->
-                <div class="score-card fade-in">
-                    <div class="chart-container">
-                        <canvas id="scoreChart"></canvas>
-                        <div class="score-display" id="scoreDisplay">...</div>
+        <div class="top-summary-grid">
+            <!-- 分數卡片 -->
+            <div class="score-card fade-in">
+                <div class="chart-container">
+                    <canvas id="scoreChart"></canvas>
+                    <div class="score-display" id="scoreDisplay">...</div>
+                </div>
+                <div class="score-label" id="articleTitle">...</div>
+                <div class="score-details">
+                    <div class="detail-item">
+                        <div class="detail-value" id="correctCount">...</div>
+                        <div class="detail-label">答對題數</div>
                     </div>
-                    <div class="score-label" id="articleTitle">...</div>
-                    <div class="score-details">
-                        <div class="detail-item">
-                            <div class="detail-value" id="correctCount">...</div>
-                            <div class="detail-label">答對題數</div>
-                        </div>
-                        <div class="detail-item">
-                            <div class="detail-value" id="totalQuestions">...</div>
-                            <div class="detail-label">總題數</div>
-                        </div>
-                        <div class="detail-item">
-                            <div class="detail-value" id="completionTime">...</div>
-                            <div class="detail-label">完成時間</div>
-                        </div>
-                        <div class="detail-item">
-                            <div class="detail-value" id="earnedPoints">...</div>
-                            <div class="detail-label">獲得分數</div>
-                        </div>
+                    <div class="detail-item">
+                        <div class="detail-value" id="totalQuestions">...</div>
+                        <div class="detail-label">總題數</div>
+                    </div>
+                    <div class="detail-item">
+                        <div class="detail-value" id="completionTime">...</div>
+                        <div class="detail-label">完成時間</div>
+                    </div>
+                    <div class="detail-item">
+                        <div class="detail-value" id="earnedPoints">...</div>
+                        <div class="detail-label">獲得分數</div>
                     </div>
                 </div>
             </div>
 
-            <div class="sidebar">
-                <!-- 成就卡片 -->
-                <div class="achievements-card slide-in">
-                    <h3 class="section-title">🏆 我的成就</h3>
-                    <div id="achievementsList">
-                        <!-- 成就項目將透過 JavaScript 動態生成 -->
-                    </div>
+            <!-- 成就卡片 -->
+            <div class="achievements-card slide-in">
+                <h3 class="section-title">🏆 我的成就</h3>
+                <div id="achievementsList">
+                    <!-- 成就項目將透過 JavaScript 動態生成 -->
                 </div>
             </div>
+        </div>
 
-            <!-- 詳細分析 -->
-            <div class="detailed-analysis fade-in">
-                <div class="analysis-header">
-                    <h2 class="section-title">🔍 逐題詳細分析</h2>
-                </div>
-                <div class="analysis-content" id="detailedAnalysis">
-                    <!-- 詳細分析內容將透過 JavaScript 動態生成 -->
-                </div>
+        <!-- 詳細分析 -->
+        <div class="detailed-analysis fade-in">
+            <div class="analysis-header">
+                <h2 class="section-title">🔍 逐題詳細分析</h2>
+            </div>
+            <div class="analysis-content" id="detailedAnalysis">
+                <!-- 詳細分析內容將透過 JavaScript 動態生成 -->
             </div>
         </div>
 
@@ -774,11 +756,11 @@
                     </div>
                     <div class="answer-comparison">
                         <div class="answer-box user-answer">
-                            <div class="answer-label" style="color: var(--primary-color);">您的答案</div>
+                            <div class="answer-label" style="color: var(--primary-color);"><span>👤</span> 您的答案</div>
                             <div class="answer-text">${answer.userAnswer !== null ? answer.options[answer.userAnswer] : '未作答'}</div>
                         </div>
                         <div class="answer-box correct-answer">
-                            <div class="answer-label" style="color: var(--success-color);">正確答案</div>
+                            <div class="answer-label" style="color: var(--success-color);"><span>✔️</span> 正確答案</div>
                             <div class="answer-text">${answer.options[answer.correctAnswer]}</div>
                         </div>
                     </div>

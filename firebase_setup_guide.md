@@ -47,6 +47,20 @@ const firebaseConfig = {
 3. 選擇「以**正式**模式啟動」（我們將使用自訂規則）
 4. 選擇資料庫位置（建議選擇離您較近的位置）
 
+### 資料庫結構 (更新)
+
+為了支援多科目，資料結構已更新：
+
+- **`articles` 集合:**
+  - 每份文件現在包含一個 `subject` 欄位 (例如: `"english"` 或 `"chemistry"`)。
+  - `estimatedReadingTime`: (Number) 由管理者設定的測驗時間（單位：分鐘）。
+- **`leaderboard` 集合:**
+  - 每份使用者文件現在按科目儲存分數和統計資料。
+  - 移除了通用的 `totalScore`, `testsCompleted` 和 `rank` 欄位。
+  - 新增了特定科目的欄位，例如: `totalScore_english`, `testsCompleted_english`, `rank_english`, `totalScore_chemistry`, `testsCompleted_chemistry`, `rank_chemistry`。
+- **`test-sessions` 集合:**
+  - 每份測驗記錄文件現在也包含一個 `subject` 欄位，以標識該次測驗所屬的科目。
+
 ## 🔒 第五步：設定安全規則
 
 在 Firestore Database > 規則 中，使用以下規則：
@@ -110,16 +124,17 @@ service cloud.firestore {
 1. 在左側選單點擊「Authentication」
 2. 點擊「開始使用」
 3. 在「Sign-in method」標籤中：
-   - **啟用「匿名」登入**（供訪客使用，這是**必要**步驟）
-   - **啟用「電子郵件/密碼」**（供管理員使用）
+   - **啟用「電子郵件/密碼」**（供管理員與使用者登入）
 
-### 建立管理員帳號
+### 建立使用者帳號 (管理員與一般使用者)
 
 在 Authentication > Users 中：
 1. 點擊「新增使用者」
 2. 輸入管理員電子郵件：`admin@englishhub.com`
 3. 輸入密碼：`Admin@123456` (或您自己的安全密碼)
-4. 建立後，您的管理員帳號就完成了。
+4. 點擊「新增使用者」以完成建立。
+
+由於使用者無法自行註冊，您需要在此手動為所有一般使用者建立帳號。步驟與建立管理員帳號完全相同，只需使用他們的電子郵件和一個初始密碼即可。
 
 ## 🤔 第七步：疑難排解 - 無法登入？
 
