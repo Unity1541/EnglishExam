@@ -683,6 +683,7 @@
             <a class="tab-item" data-section="upload-english">📤 <span>上傳英文文章</span></a>
             <a class="tab-item" data-section="upload-chemistry">📤 <span>上傳化學文章</span></a>
             <a class="tab-item" data-section="edit-questions">✏️ <span>題目修改</span></a>
+            <a class="tab-item" data-section="test-records">📝 <span>測驗記錄</span></a>
             <a class="tab-item" data-section="leaderboard">🏆 <span>排行榜管理</span></a>
         </nav>
 
@@ -906,6 +907,34 @@
                 </div>
             </div>
 
+            <!-- 測驗記錄 -->
+            <div id="test-records-section" class="content-section hidden">
+                <div class="section-header">
+                    <h2 class="section-title">所有測驗記錄</h2>
+                    <input type="search" class="form-input" id="testRecordsSearchInput" placeholder="搜尋用戶暱稱或文章標題..." style="max-width: 400px;">
+                </div>
+                <div class="section-content" style="padding: 0;">
+                    <div style="overflow-x: auto;">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>用戶</th>
+                                    <th>文章</th>
+                                    <th>科目</th>
+                                    <th>分數</th>
+                                    <th>日期</th>
+                                    <th>操作</th>
+                                </tr>
+                            </thead>
+                            <tbody id="test-records-table"></tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="pagination-controls">
+                    <button class="btn btn-secondary" id="loadMoreTestRecordsBtn">載入更多</button>
+                </div>
+            </div>
+
             <!-- 排行榜管理 -->
             <div id="leaderboard-section" class="content-section hidden">
                 <div class="section-header">
@@ -918,7 +947,7 @@
                             </select>
                         </div>
                         <button class="btn btn-danger" id="clearLeaderboardBtn">
-                            🗑️ 清除此科目分數
+                            🗑️ 重設此科目分數
                         </button>
                     </div>
                 </div>
@@ -1069,6 +1098,7 @@
         const api = {
             async getStats() {
                 const globalUsersPromise = state.db.collection('leaderboard').get().then(snap => snap.size);
+                const globalSessionsPromise = state.db.collection('test-sessions').get().then(snap => snap.size);
                 
                 let subjectStats = {};
                 for (const subjectId in state.subjects) {
@@ -1090,25 +1120,25 @@
                     };
                 }
 
-                const [usersCount] = await Promise.all([globalUsersPromise]);
+                const [usersCount, sessionsCount] = await Promise.all([globalUsersPromise, globalSessionsPromise]);
 
                 return {
                     subjects: subjectStats,
                     totalUsers: usersCount,
+                    totalSessions: sessionsCount,
                     isEmpty: Object.values(subjectStats).every(s => s.articles === 0)
                 };
             },
-            async getRecentSessions(subject, lastVisible = null) {
+            async getRecentSessions(lastVisible = null) {
                 let query = state.db.collection('test-sessions')
-                    .where('subject', '==', subject)
                     .orderBy('timestamp', 'desc')
-                    .limit(10);
+                    .limit(20);
                 if (lastVisible) query = query.startAfter(lastVisible);
                 const snapshot = await query.get();
                 return {
                     docs: snapshot.docs,
                     lastVisible: snapshot.docs[snapshot.docs.length - 1],
-                    allLoaded: snapshot.empty
+                    allLoaded: snapshot.empty || snapshot.docs.length < 20
                 };
             },
             async getArticles(subject) {
@@ -1192,6 +1222,10 @@
                 document.getElementById('deleteArticleBtn').addEventListener('click', () => this.confirmDeleteArticle());
                 document.getElementById('saveQuestionBtn').addEventListener('click', this.handleEditQuestion);
 
+                // Test Records Listeners
+                document.getElementById('loadMoreTestRecordsBtn').addEventListener('click', () => this.loadTestRecords(true));
+                document.getElementById('testRecordsSearchInput').addEventListener('input', this.handleTestRecordsSearch);
+
                 // Leaderboard Listeners
                 document.getElementById('leaderboardSubjectSelect').addEventListener('change', () => this.loadLeaderboardData());
                 document.getElementById('clearLeaderboardBtn').addEventListener('click', this.confirmClearLeaderboard);
@@ -1242,6 +1276,7 @@
                     case 'dashboard': this.loadDashboardData(); break;
                     case 'edit-questions': this.loadArticlesForSelection(); break;
                     case 'leaderboard': this.loadLeaderboardData(); break;
+                    case 'test-records': this.loadTestRecords(); break;
                     case 'upload-english': /* No initial data loading needed */ break;
                     case 'upload-chemistry': /* No initial data loading needed */ break;
                 }
@@ -1269,7 +1304,10 @@
                     
                     let dashboardHtml = `<div class="content-section"><div class="section-header"><h2 class="section-title">📊 總覽</h2></div>
                         <div class="section-content">
-                            <div class="stat-card" style="max-width: 300px;"><div class="stat-header"><div><div class="stat-value">${stats.totalUsers}</div><div class="stat-label">總註冊用戶</div></div><div class="stat-icon info">👥</div></div></div>
+                            <div class="stats-grid">
+                                <div class="stat-card"><div class="stat-header"><div><div class="stat-value">${stats.totalUsers}</div><div class="stat-label">總註冊用戶</div></div><div class="stat-icon info">👥</div></div></div>
+                                <div class="stat-card"><div class="stat-header"><div><div class="stat-value">${stats.totalSessions.toLocaleString()}</div><div class="stat-label">總測驗次數</div></div><div class="stat-icon warning">📝</div></div></div>
+                            </div>
                         </div></div>`;
 
                     for (const subjectId in stats.subjects) {
@@ -1283,7 +1321,7 @@
                             <div class="section-content">
                                 <div class="stats-grid">
                                     <div class="stat-card"><div class="stat-header"><div><div class="stat-value">${subjectData.articles}</div><div class="stat-label">總文章數</div></div><div class="stat-icon success">📚</div></div></div>
-                                    <div class="stat-card"><div class="stat-header"><div><div class="stat-value">${subjectData.sessions.toLocaleString()}</div><div class="stat-label">總測驗次數</div></div><div class="stat-icon warning">📝</div></div></div>
+                                    <div class="stat-card"><div class="stat-header"><div><div class="stat-value">${subjectData.sessions.toLocaleString()}</div><div class="stat-label">本科測驗次數</div></div><div class="stat-icon warning">📝</div></div></div>
                                     <div class="stat-card"><div class="stat-header"><div><div class="stat-value">${subjectData.avgScore}</div><div class="stat-label">平均正確率</div></div><div class="stat-icon primary">🎯</div></div></div>
                                 </div>
                             </div>
@@ -1531,6 +1569,94 @@
                 }
             },
 
+            confirmDeleteTestRecord(sessionId, nickname, articleTitle) {
+                ui.showConfirmation(
+                    '刪除測驗記錄',
+                    `您確定要刪除用戶「${nickname}」關於文章「${articleTitle}」的測驗記錄嗎？此操作無法復原。`,
+                    () => this.deleteTestRecord(sessionId)
+                );
+            },
+
+            async deleteTestRecord(sessionId) {
+                try {
+                    await state.db.collection('test-sessions').doc(sessionId).delete();
+                    ui.showNotification('測驗記錄已成功刪除', 'success');
+                    const row = document.getElementById(`test-record-${sessionId}`);
+                    if (row) {
+                        row.remove();
+                    }
+                } catch (e) {
+                    console.error("Failed to delete test record:", e);
+                    ui.showNotification(`刪除記錄失敗: ${e.message}`, 'error');
+                }
+            },
+
+            async loadTestRecords(loadMore = false) {
+                const loadBtn = document.getElementById('loadMoreTestRecordsBtn');
+                ui.setLoading(loadBtn, true);
+
+                if (!loadMore) {
+                    state.pagination.sessions = { lastVisible: null, allLoaded: false };
+                    document.getElementById('test-records-table').innerHTML = '';
+                    document.getElementById('testRecordsSearchInput').value = '';
+                }
+
+                try {
+                    const { docs, lastVisible, allLoaded } = await api.getRecentSessions(state.pagination.sessions.lastVisible);
+                    this.renderTestRecords(docs);
+                    
+                    state.pagination.sessions.lastVisible = lastVisible;
+                    state.pagination.sessions.allLoaded = allLoaded;
+                    loadBtn.classList.toggle('hidden', allLoaded);
+
+                } catch(e) {
+                    ui.showNotification('載入測驗記錄失敗', 'error');
+                    console.error(e);
+                } finally {
+                    ui.setLoading(loadBtn, false);
+                }
+            },
+            
+            renderTestRecords(docs) {
+                const tableBody = document.getElementById('test-records-table');
+                docs.forEach(doc => {
+                    const data = doc.data();
+                    const subjectInfo = state.subjects[data.subject] || { name: data.subject || 'N/A', icon: '?'};
+                    const date = data.timestamp?.toDate().toLocaleString() || 'N/A';
+                    
+                    const row = document.createElement('tr');
+                    row.id = `test-record-${doc.id}`; // Add ID for easy DOM removal
+                    row.dataset.nickname = data.nickname.toLowerCase();
+                    row.dataset.title = data.articleTitle.toLowerCase();
+                    
+                    // Safely escape single quotes for the onclick handler
+                    const safeNickname = (data.nickname || '').replace(/'/g, "\\'");
+                    const safeArticleTitle = (data.articleTitle || '').replace(/'/g, "\\'");
+
+                    row.innerHTML = `
+                        <td>${data.nickname}</td>
+                        <td>${data.articleTitle}</td>
+                        <td>${subjectInfo.icon} ${subjectInfo.name}</td>
+                        <td>${data.score}%</td>
+                        <td>${date}</td>
+                        <td>
+                            <a href="test_result_analyzer.html?sessionId=${doc.id}" target="_blank" class="btn btn-secondary" style="padding:0.4rem 0.8rem">查看分析</a>
+                            <button class="btn btn-danger" style="padding:0.4rem 0.8rem; margin-left:0.5rem;" onclick="handlers.confirmDeleteTestRecord('${doc.id}', '${safeNickname}', '${safeArticleTitle}')">刪除</button>
+                        </td>
+                    `;
+                    tableBody.appendChild(row);
+                });
+            },
+            
+            handleTestRecordsSearch(event) {
+                const query = event.target.value.toLowerCase();
+                document.querySelectorAll('#test-records-table tr').forEach(row => {
+                    const nickname = row.dataset.nickname || '';
+                    const title = row.dataset.title || '';
+                    row.classList.toggle('hidden', !nickname.includes(query) && !title.includes(query));
+                });
+            },
+
             async loadLeaderboardData(loadMore = false) {
                 const loadBtn = document.getElementById('loadMoreLeaderboardBtn');
                 const subject = document.getElementById('leaderboardSubjectSelect').value;
@@ -1587,8 +1713,8 @@
             confirmClearLeaderboard() {
                 const subject = document.getElementById('leaderboardSubjectSelect').value;
                 const subjectName = state.subjects[subject].name;
-                ui.showConfirmation('清除分數', `確定要清除所有用戶的「${subjectName}」分數和測驗記錄嗎？此操作無法復原。`, async () => {
-                    ui.showNotification('正在清除...', 'warning');
+                ui.showConfirmation('重設排行榜分數', `確定要重設所有用戶的「${subjectName}」排行榜分數嗎？用戶的個別測驗記錄將會保留。此操作無法復原。`, async () => {
+                    ui.showNotification('正在重設分數...', 'warning');
                     try {
                         const snapshot = await state.db.collection('leaderboard').get();
                         const batch = state.db.batch();
@@ -1600,9 +1726,9 @@
                              batch.update(doc.ref, updates);
                         });
                         await batch.commit();
-                        ui.showNotification(`${subjectName}分數已清除！`, 'success');
+                        ui.showNotification(`${subjectName}排行榜分數已重設！`, 'success');
                         this.loadLeaderboardData();
-                    } catch (e) { ui.showNotification('清除失敗', 'error'); }
+                    } catch (e) { ui.showNotification('重設失敗', 'error'); }
                 });
             },
             

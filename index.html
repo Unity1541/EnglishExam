@@ -145,7 +145,7 @@
         .header-actions {
             display: flex;
             align-items: center;
-            gap: 1.5rem;
+            gap: 1rem;
         }
 
         .current-user {
@@ -573,6 +573,29 @@
         .article-card.skeleton { height: 350px; cursor: default; }
         .article-card.skeleton:hover { transform: none; box-shadow: none; border-color: var(--border-color); }
         .leaderboard-item.skeleton { height: 90px; }
+        
+        /* History Modal Styles */
+        .history-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1rem;
+        }
+        .history-table th, .history-table td {
+            padding: 0.8rem 1rem;
+            text-align: left;
+            border-bottom: 1px solid var(--border-color);
+        }
+         .history-table th {
+            font-weight: 600;
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+        .history-table td {
+            color: var(--text-primary);
+        }
+        .history-table tr:hover {
+            background: rgba(255, 255, 255, 0.02);
+        }
 
 
         @media (max-width: 1024px) {
@@ -626,6 +649,19 @@
         </div>
     </div>
 
+    <!-- Test History Modal -->
+    <div class="modal hidden" id="historyModal">
+        <div class="modal-content" style="max-width: 800px; text-align: left;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+                <h2 class="modal-title">我的測驗記錄</h2>
+                <button class="btn-secondary" onclick="ui.hideModal('historyModal')" style="padding: 0.5rem; border-radius: 50%; width: 2.5rem; height: 2.5rem;">X</button>
+            </div>
+            <div id="historyListContainer" style="max-height: 60vh; overflow-y: auto; padding-right: 1rem;">
+                <!-- History items will be injected here -->
+            </div>
+        </div>
+    </div>
+
 
     <div id="app-container" style="display: none;">
         <header class="header">
@@ -643,6 +679,7 @@
                             </div>
                             <button class="change-nickname-btn" id="changeNicknameBtn" title="更改暱稱">✏️</button>
                         </div>
+                        <button class="btn btn-secondary" id="historyBtn">測驗記錄</button>
                         <button class="btn btn-secondary" id="logoutBtn">登出</button>
                     </div>
                     <div id="guestUserInfo" style="display: flex; gap: 1rem;">
@@ -866,6 +903,7 @@
                 document.getElementById('showAuthModalBtn').addEventListener('click', () => ui.showModal('authModal'));
                 document.getElementById('logoutBtn').addEventListener('click', () => this.handleLogout());
                 document.getElementById('loginForm').addEventListener('submit', (e) => this.handleLogin(e));
+                document.getElementById('historyBtn').addEventListener('click', () => this.showHistoryModal());
 
                 document.getElementById('changeNicknameBtn').addEventListener('click', () => {
                     document.getElementById('nicknameInput').value = state.currentUserData.nickname;
@@ -1067,6 +1105,62 @@
                 } else {
                     state.pendingArticleId = articleId;
                     ui.showModal('authModal');
+                }
+            },
+
+            showHistoryModal() {
+                ui.showModal('historyModal');
+                this.loadTestHistory();
+            },
+
+            async loadTestHistory() {
+                const container = document.getElementById('historyListContainer');
+                container.innerHTML = `<div style="text-align:center;"><div class="spinner"></div></div>`;
+                
+                if (!state.currentUser) {
+                    container.innerHTML = '<p style="text-align:center;">請先登入以查看記錄。</p>';
+                    return;
+                }
+
+                try {
+                    const snapshot = await state.db.collection('test-sessions')
+                        .where('userId', '==', state.currentUser.uid)
+                        .orderBy('timestamp', 'desc')
+                        .limit(50)
+                        .get();
+
+                    if (snapshot.empty) {
+                        container.innerHTML = '<p style="text-align:center; color: var(--text-secondary);">您目前沒有任何測驗記錄。</p>';
+                        return;
+                    }
+                    
+                    let tableHTML = `<table class="history-table">
+                        <thead>
+                            <tr><th>文章標題</th><th>科目</th><th>分數</th><th>日期</th><th></th></tr>
+                        </thead><tbody>`;
+
+                    snapshot.docs.forEach(doc => {
+                        const data = doc.data();
+                        const subjectInfo = state.subjects[data.subject] || { name: data.subject || 'N/A', icon: '?'};
+                        const date = data.timestamp ? data.timestamp.toDate().toLocaleString() : 'N/A';
+                        tableHTML += `
+                            <tr>
+                                <td>${data.articleTitle}</td>
+                                <td>${subjectInfo.icon} ${subjectInfo.name}</td>
+                                <td>${data.score}%</td>
+                                <td>${date}</td>
+                                <td><a href="test_result_analyzer.html?sessionId=${doc.id}" class="btn btn-secondary" style="padding: 0.4rem 0.8rem;">查看分析</a></td>
+                            </tr>
+                        `;
+                    });
+                    
+                    tableHTML += '</tbody></table>';
+                    container.innerHTML = tableHTML;
+
+                } catch (error) {
+                    console.error("Error loading test history:", error);
+                    container.innerHTML = `<p style="text-align:center; color: var(--error-color);">無法載入記錄: ${error.message}</p>`;
+                    ui.showNotification('載入測驗記錄失敗', 'error');
                 }
             }
         };
