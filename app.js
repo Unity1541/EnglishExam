@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { initializeFirebase, getFirebaseInstances } from './firebase-config.js';
+import { getFirebaseInstances } from './firebase-config.js';
 
 // --- State Management ---
 let quizState = {
@@ -66,14 +66,13 @@ document.addEventListener('DOMContentLoaded', () => {
     DOM.restartBtn.addEventListener('click', resetToStartScreen);
     DOM.backToStartBtn.addEventListener('click', resetToStartScreen);
 
-    const firebaseConfig = getFirebaseConfigFromStorage();
-    if (firebaseConfig) {
-        initializeFirebase(firebaseConfig);
+    const { isConfigured } = getFirebaseInstances();
+    if (isConfigured) {
         listenForAuthState();
     } else {
         // Show login screen but with a persistent error
         DOM.loginScreen.classList.remove('hidden');
-        showLoginError('Firebase尚未由管理員設定，無法啟動測驗。');
+        showLoginError('Firebase尚未由管理員設定，或設定檔(firebase-credentials.js)錯誤，無法啟動測驗。');
         DOM.loginBtn.disabled = true;
     }
 });
@@ -93,11 +92,6 @@ function listenForAuthState() {
             onLogout();
         }
     });
-}
-
-function getFirebaseConfigFromStorage() {
-    const configStr = localStorage.getItem('firebaseConfig');
-    return configStr ? JSON.parse(configStr) : null;
 }
 
 // --- Authentication Flow ---
@@ -278,7 +272,7 @@ async function loadQuizHistory() {
         });
     } catch (error) {
         console.error("Error loading quiz history:", error);
-        DOM.historyList.innerHTML = `<li>無法載入作答紀錄: ${error.message}</li>`;
+        DOM.historyList.innerHTML = `<li>無法載入作答紀錄。資料庫索引尚未設定，請聯繫管理員。</li>`;
     }
 }
 
@@ -317,7 +311,7 @@ async function loadPersonalBests() {
         });
     } catch (error) {
         console.error("Error loading personal bests:", error);
-        DOM.personalBestList.innerHTML = `<li>無法載入最佳紀錄: ${error.message}</li>`;
+        DOM.personalBestList.innerHTML = `<li>無法載入最佳紀錄。資料庫索引尚未設定，請聯繫管理員。</li>`;
     }
 }
 

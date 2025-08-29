@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { initializeFirebase, getFirebaseInstances } from '../firebase-config.js';
+import { getFirebaseInstances } from '../firebase-config.js';
 
 // --- State Management ---
 let currentUser = null;
@@ -40,8 +40,6 @@ const DOM = {
     questionsList: document.getElementById('questionsList'),
     recordsList: document.getElementById('records-list'),
     recordsFeedback: document.getElementById('records-feedback'),
-    saveFirebaseConfigBtn: document.getElementById('saveFirebaseConfig'),
-    configFeedback: document.getElementById('config-feedback'),
     testTimeInput: document.getElementById('testTime'),
     saveTestTimeBtn: document.getElementById('saveTestTimeBtn'),
     settingsFeedback: document.getElementById('settings-feedback'),
@@ -49,13 +47,7 @@ const DOM = {
     jsonInputArea: document.getElementById('json-input-area'),
     submitQuestionBtn: document.getElementById('submit-question-btn'),
     addQuestionFeedback: document.getElementById('add-question-feedback'),
-    // Firebase config form inputs
-    apiKey: document.getElementById('apiKey'),
-    authDomain: document.getElementById('authDomain'),
-    projectId: document.getElementById('projectId'),
-    storageBucket: document.getElementById('storageBucket'),
-    messagingSenderId: document.getElementById('messagingSenderId'),
-    appId: document.getElementById('appId'),
+    firebaseModeInfoPanel: document.getElementById('firebase-mode-info-panel'),
     // Edit Modal
     editModal: document.getElementById('edit-question-modal'),
     closeModalBtn: document.getElementById('close-modal-btn'),
@@ -72,11 +64,10 @@ document.addEventListener('DOMContentLoaded', () => {
     DOM.logoutBtn.addEventListener('click', handleLogout);
     DOM.saveTestTimeBtn.addEventListener('click', saveTestTime);
     DOM.submitQuestionBtn.addEventListener('click', handleAddQuestion);
-    DOM.saveFirebaseConfigBtn.addEventListener('click', saveFirebaseConfig);
     DOM.closeModalBtn.addEventListener('click', () => DOM.editModal.classList.add('hidden'));
     DOM.saveEditBtn.addEventListener('click', handleSaveEdit);
     DOM.recordsList.addEventListener('click', handleRecordAction);
-    DOM.questionsList.addEventListener('click', handleQuestionAction); // Refactored for event delegation
+    DOM.questionsList.addEventListener('click', handleQuestionAction);
 
     DOM.tabsContainer.addEventListener('click', (e) => {
         if (e.target.classList.contains('tab')) {
@@ -95,19 +86,14 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
     
-    // Initial state setup
-    const savedConfig = localStorage.getItem('firebaseConfig');
-    if (savedConfig) {
-        const config = JSON.parse(savedConfig);
-        const result = initializeFirebase(config);
-        if (result.success) {
-            updateUIMode(true);
-            listenForAuthState();
-        } else {
-            updateUIMode(false);
-        }
+    // Initial state setup based on successful Firebase initialization
+    const { isConfigured } = getFirebaseInstances();
+    if (isConfigured) {
+        updateUIMode(true);
+        listenForAuthState();
     } else {
         updateUIMode(false); // Default to Demo Mode
+        console.warn("Firebase not configured. Running in Demo Mode. Please check firebase-credentials.js");
     }
 });
 
@@ -117,7 +103,6 @@ function listenForAuthState() {
         if (user) {
             onLoginSuccess({ email: user.email });
         } else {
-            // This will keep the user on the login page if they are not logged in
             handleLogout();
         }
     });
@@ -132,11 +117,13 @@ function updateUIMode(isFirebase) {
         indicator.className = 'firebase-mode';
         document.getElementById('demo-info').classList.add('hidden');
         document.getElementById('demo-mode-info-panel').classList.add('hidden');
+        DOM.firebaseModeInfoPanel.classList.remove('hidden');
     } else {
         indicator.textContent = 'Demo Mode';
         indicator.className = 'demo-mode';
         document.getElementById('demo-info').classList.remove('hidden');
         document.getElementById('demo-mode-info-panel').classList.remove('hidden');
+        DOM.firebaseModeInfoPanel.classList.add('hidden');
     }
 }
 
@@ -176,7 +163,7 @@ function onLoginSuccess(user) {
 async function handleLogout() {
     if (isFirebaseMode) {
         const { auth, isConfigured } = getFirebaseInstances();
-        if (isConfigured) {
+        if (isConfigured && auth.currentUser) {
             try {
                 await auth.signOut();
             } catch (error) {
@@ -318,32 +305,6 @@ async function saveTestTime() {
         showFeedback(DOM.settingsFeedback, '設定已成功儲存！', 'success');
     } catch (error) {
         showFeedback(DOM.settingsFeedback, `儲存失敗: ${error.message}`, 'error');
-    }
-}
-
-// --- Firebase Configuration ---
-function saveFirebaseConfig() {
-    const config = {
-        apiKey: DOM.apiKey.value.trim(),
-        authDomain: DOM.authDomain.value.trim(),
-        projectId: DOM.projectId.value.trim(),
-        storageBucket: DOM.storageBucket.value.trim(),
-        messagingSenderId: DOM.messagingSenderId.value.trim(),
-        appId: DOM.appId.value.trim(),
-    };
-
-    if (Object.values(config).some(v => v === '')) {
-        showFeedback(DOM.configFeedback, '所有欄位均為必填', 'error');
-        return;
-    }
-
-    const result = initializeFirebase(config);
-    if (result.success) {
-        localStorage.setItem('firebaseConfig', JSON.stringify(config));
-        showFeedback(DOM.configFeedback, 'Firebase 設定已儲存！頁面將在3秒後重新載入...', 'success');
-        setTimeout(() => window.location.reload(), 3000);
-    } else {
-        showFeedback(DOM.configFeedback, `設定失敗: ${result.error}`, 'error');
     }
 }
 

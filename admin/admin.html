@@ -429,7 +429,6 @@
                 <button class="tab" data-tab="manage">題目管理</button>
                 <button class="tab" data-tab="user-records">作答紀錄</button>
                 <button class="tab" data-tab="settings">測驗設定</button>
-                <button class="tab" data-tab="firebase-setup">Firebase 設定</button>
             </div>
 
             <!-- JSON Examples Tab -->
@@ -442,6 +441,14 @@
                     </p>
                 </div>
                 
+                <div id="firebase-mode-info-panel" class="info-box hidden" style="background: #e3f2fd; border-left-color: #2196F3;">
+                     <h3 style="color: #1976D2; margin-bottom: 10px;">🔥 Firebase 模式說明</h3>
+                     <p style="color: #1565C0; margin: 0;">
+                        系統已成功連接至您的 Firebase 專案。所有操作都將直接寫入您的雲端資料庫。
+                        請確保您已依照 `README.md` 的指示，正確設定了安全規則與 `admins` 集合。
+                     </p>
+                </div>
+
                 <h2 style="color: #2c3e50; margin-bottom: 25px;">Firebase JSON 格式範例</h2>
                 
                 <div class="json-examples">
@@ -612,28 +619,6 @@
                 <div id="settings-feedback" class="hidden" style="margin-top: 20px;"></div>
             </div>
 
-            <!-- Firebase Setup Tab -->
-            <div id="firebase-setup-tab" class="content-panel tab-content hidden">
-                <h2 style="color: #2c3e50; margin-bottom: 25px;">Firebase 設定</h2>
-                 <div class="info-box" style="background: #fff3e0; border-left-color: #ff9800;">
-                    <h4 style="color: #e65100;">設定說明</h4>
-                    <p style="color: #ef6c00;">
-                        請從您 Firebase 專案的設定中，複製 Web App 的設定物件並貼到下方對應欄位。設定完成後，系統將會自動重新載入並連接至您的 Firebase 資料庫。
-                        詳細步驟請參考 `README.md` 檔案。
-                    </p>
-                </div>
-                <div id="firebase-config-form">
-                    <div class="form-group"><label>apiKey</label><input type="text" id="apiKey" placeholder="AIzaSy..."></div>
-                    <div class="form-group"><label>authDomain</label><input type="text" id="authDomain" placeholder="your-project-id.firebaseapp.com"></div>
-                    <div class="form-group"><label>projectId</label><input type="text" id="projectId" placeholder="your-project-id"></div>
-                    <div class="form-group"><label>storageBucket</label><input type="text" id="storageBucket" placeholder="your-project-id.appspot.com"></div>
-                    <div class="form-group"><label>messagingSenderId</label><input type="text" id="messagingSenderId" placeholder="1234567890"></div>
-                    <div class="form-group"><label>appId</label><input type="text" id="appId" placeholder="1:12345:web:abcd"></div>
-                    <button id="saveFirebaseConfig" class="btn btn-success">儲存設定</button>
-                    <div id="config-feedback" class="hidden" style="margin-top: 20px;"></div>
-                </div>
-            </div>
-
         </div>
     </div>
     
@@ -660,6 +645,7 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
 
     <!-- App Scripts -->
+    <script type="module" src="../firebase-config.js"></script>
     <script type="module" src="./app.js"></script>
 
 </body>
