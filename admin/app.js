@@ -43,7 +43,7 @@ const DOM = {
     testTimeInput: document.getElementById('testTime'),
     saveTestTimeBtn: document.getElementById('saveTestTimeBtn'),
     settingsFeedback: document.getElementById('settings-feedback'),
-    questionTypeSelect: document.getElementById('question-type-select'),
+    questionTypeSelector: document.getElementById('question-type-selector'),
     jsonInputArea: document.getElementById('json-input-area'),
     submitQuestionBtn: document.getElementById('submit-question-btn'),
     addQuestionFeedback: document.getElementById('add-question-feedback'),
@@ -64,6 +64,7 @@ document.addEventListener('DOMContentLoaded', () => {
     DOM.logoutBtn.addEventListener('click', handleLogout);
     DOM.saveTestTimeBtn.addEventListener('click', saveTestTime);
     DOM.submitQuestionBtn.addEventListener('click', handleAddQuestion);
+    DOM.questionTypeSelector.addEventListener('change', handleTemplateSelection);
     DOM.closeModalBtn.addEventListener('click', () => DOM.editModal.classList.add('hidden'));
     DOM.saveEditBtn.addEventListener('click', handleSaveEdit);
     DOM.recordsList.addEventListener('click', handleRecordAction);
@@ -197,7 +198,7 @@ function switchTab(tabId) {
     if (tabId === 'add-question') {
         showFeedback(DOM.addQuestionFeedback, '', 'hidden');
         DOM.jsonInputArea.value = '';
-        DOM.questionTypeSelect.value = '';
+        DOM.questionTypeSelector.value = '';
     }
 }
 
@@ -215,50 +216,88 @@ function showFeedback(element, message, type) {
 }
 
 // --- Add Question ---
-async function handleAddQuestion() {
-    const selectedType = DOM.questionTypeSelect.value;
-    const jsonString = DOM.jsonInputArea.value.trim();
-
+function handleTemplateSelection() {
+    const selectedType = DOM.questionTypeSelector.value;
     if (!selectedType) {
-        showFeedback(DOM.addQuestionFeedback, '請先選擇題目類型', 'error');
+        DOM.jsonInputArea.value = '';
+        DOM.jsonInputArea.placeholder = '選擇類型後，範本將顯示於此。可貼上單一物件或物件陣列...';
         return;
     }
+
+    // Map selector value to the <pre> element ID
+    const exampleId = {
+        vocabulary: 'vocab-example',
+        grammar: 'grammar-example',
+        cloze: 'cloze-example',
+        reading: 'reading-example'
+    }[selectedType];
+
+    const exampleText = document.getElementById(exampleId)?.innerText || '';
+    DOM.jsonInputArea.value = exampleText;
+    DOM.jsonInputArea.focus();
+}
+
+async function handleAddQuestion() {
+    const jsonString = DOM.jsonInputArea.value.trim();
+    showFeedback(DOM.addQuestionFeedback, '', 'hidden');
 
     if (!jsonString) {
         showFeedback(DOM.addQuestionFeedback, 'JSON 內容不能為空', 'error');
         return;
     }
 
-    let questionData;
+    let parsedData;
     try {
-        questionData = JSON.parse(jsonString);
+        parsedData = JSON.parse(jsonString);
     } catch (error) {
-        showFeedback(DOM.addQuestionFeedback, 'JSON 格式錯誤，請檢查您的輸入', 'error');
-        return;
-    }
-
-    if (!questionData.id || !questionData.questionType) {
-        showFeedback(DOM.addQuestionFeedback, 'JSON 缺少必要的欄位: id 和 questionType', 'error');
+        showFeedback(DOM.addQuestionFeedback, `JSON 格式錯誤，請檢查您的輸入: ${error.message}`, 'error');
         return;
     }
     
-    if (questionData.questionType !== selectedType) {
-        showFeedback(DOM.addQuestionFeedback, `JSON 內的 "questionType" ("${questionData.questionType}") 與您選擇的類型 ("${selectedType}") 不符。`, 'error');
+    let questionsToAdd;
+    if (Array.isArray(parsedData)) {
+        questionsToAdd = parsedData;
+    } else if (typeof parsedData === 'object' && parsedData !== null) {
+        // Allow single object but wrap it in an array for consistent handling
+        questionsToAdd = [parsedData]; 
+    } else {
+        showFeedback(DOM.addQuestionFeedback, '無效的 JSON 格式。請提供一個 JSON 物件或物件陣列。', 'error');
         return;
+    }
+
+    if (questionsToAdd.length === 0) {
+        showFeedback(DOM.addQuestionFeedback, '提交的資料為空陣列，未新增任何題目。', 'error');
+        return;
+    }
+
+    // Validate all questions before batching
+    for (const q of questionsToAdd) {
+        if (!q.id || !q.questionType) {
+            showFeedback(DOM.addQuestionFeedback, `JSON 資料格式錯誤：其中一筆題目缺少 'id' 或 'questionType' 欄位。問題資料: ${JSON.stringify(q)}`, 'error');
+            return;
+        }
     }
 
     try {
         if (isFirebaseMode) {
             const { db } = getFirebaseInstances();
-            await db.collection('toeic_questions').doc(questionData.id).set(questionData);
+            const batch = db.batch();
+            questionsToAdd.forEach(question => {
+                const docRef = db.collection('toeic_questions').doc(question.id);
+                batch.set(docRef, question);
+            });
+            await batch.commit();
         } else {
-            mockDatabase.toeic_questions[questionData.id] = questionData;
+            // Demo mode
+            questionsToAdd.forEach(question => {
+                mockDatabase.toeic_questions[question.id] = question;
+            });
         }
-        showFeedback(DOM.addQuestionFeedback, `題目 (ID: ${questionData.id}) 已成功新增！`, 'success');
+        showFeedback(DOM.addQuestionFeedback, `題目 (${questionsToAdd.length} 筆) 已成功新增！`, 'success');
         DOM.jsonInputArea.value = '';
-        DOM.questionTypeSelect.value = '';
+        DOM.questionTypeSelector.value = '';
     } catch (error) {
-        console.error("Error adding question:", error);
+        console.error("Error adding question(s):", error);
         let errorMsg = `新增失敗: ${error.message}`;
         if (error.code === 'permission-denied') {
             errorMsg += "<br><strong>提示：</strong>請確認您的管理員權限 (admins 集合) 已正確設定。";

@@ -449,110 +449,127 @@
                      </p>
                 </div>
 
-                <h2 style="color: #2c3e50; margin-bottom: 25px;">Firebase JSON 格式範例</h2>
+                <h2 style="color: #2c3e50; margin-bottom: 25px;">JSON 批次上傳格式範例</h2>
                 
                 <div class="json-examples">
                     <div class="example-card">
                         <h4>🔤 單字題 (Vocabulary)</h4>
-                        <pre id="vocab-example">{
-  "id": "vocab_001",
-  "questionType": "vocabulary",
-  "level": "intermediate",
-  "question": "The company's new policy will _______ all employees starting next month.",
-  "options": [
-    "effect",
-    "affect", 
-    "infect",
-    "defect"
-  ],
-  "correct": 1,
-  "explanation": "Affect is a verb meaning 'to influence', while effect is a noun meaning 'result'.",
-  "tags": ["verb", "commonly_confused"],
-  "difficulty": 0.7,
-  "createdAt": "2025-01-01T10:00:00Z",
-  "createdBy": "admin@example.com"
-}</pre>
+                        <pre id="vocab-example">[
+  {
+    "id": "vocab_001",
+    "questionType": "vocabulary",
+    "level": "intermediate",
+    "question": "The company's new policy will _______ all employees.",
+    "options": ["effect", "affect", "infect", "defect"],
+    "correct": 1,
+    "explanation": "Affect is a verb; effect is a noun."
+  },
+  {
+    "id": "vocab_002",
+    "questionType": "vocabulary",
+    "level": "intermediate",
+    "question": "He is known for his _______ attention to detail.",
+    "options": ["meticulous", "spontaneous", "careless", "hasty"],
+    "correct": 0,
+    "explanation": "Meticulous means showing great attention to detail."
+  }
+]</pre>
                         <button class="btn btn-success btn-copy" data-example="vocab-example">複製範例</button>
                     </div>
                      <div class="example-card">
                         <h4>📝 文法題 (Grammar)</h4>
-                        <pre id="grammar-example">{
-  "id": "grammar_001",
-  "questionType": "grammar",
-  "level": "intermediate",
-  "question": "The report _______ by the marketing team yesterday.",
-  "options": [
-    "completed",
-    "was completed", 
-    "has completed",
-    "completes"
-  ],
-  "correct": 1,
-  "explanation": "Passive voice in past tense: was/were + past participle.",
-  "grammarPoint": "passive_voice",
-  "tags": ["passive_voice", "past_tense"],
-  "difficulty": 0.6,
-  "createdAt": "2025-01-01T10:00:00Z",
-  "createdBy": "admin@example.com"
-}</pre>
+                        <pre id="grammar-example">[
+  {
+    "id": "grammar_001",
+    "questionType": "grammar",
+    "level": "intermediate",
+    "question": "The report _______ by the marketing team yesterday.",
+    "options": ["completed", "was completed", "has completed", "completes"],
+    "correct": 1,
+    "explanation": "Passive voice in past tense."
+  },
+  {
+    "id": "grammar_002",
+    "questionType": "grammar",
+    "level": "intermediate",
+    "question": "If I _______ more time, I would have checked my work again.",
+    "options": ["have", "had had", "would have", "had"],
+    "correct": 1,
+    "explanation": "This is a third conditional sentence structure."
+  }
+]</pre>
                         <button class="btn btn-success btn-copy" data-example="grammar-example">複製範例</button>
                     </div>
                     <div class="example-card">
                         <h4>📄 克漏字 (Cloze Test)</h4>
-                        <pre id="cloze-example">{
-  "id": "cloze_001",
-  "questionType": "cloze",
-  "level": "intermediate",
-  "passage": "Dear Customers,\\n\\nWe are pleased to announce that our new online store (1)_______ officially opened last Monday. (2)_______ the past month, our team has been working diligently.",
-  "questions": [
-    {
-      "id": "cloze_001_01",
-      "question": "(1)",
-      "options": ["has", "have", "had", "having"],
-      "correct": 0,
-      "explanation": "The subject 'store' is singular, so 'has' is correct."
-    },
-    {
-      "id": "cloze_001_02", 
-      "question": "(2)",
-      "options": ["During", "For", "Since", "While"],
-      "correct": 0,
-      "explanation": "'During' is used for a specific period of time."
-    }
-  ],
-  "tags": ["business_letter", "present_perfect"],
-  "difficulty": 0.8,
-  "createdAt": "2025-01-01T10:00:00Z",
-  "createdBy": "admin@example.com"
-}</pre>
+                        <pre id="cloze-example">[
+  {
+    "id": "cloze_001",
+    "questionType": "cloze",
+    "level": "intermediate",
+    "passage": "Our new online store (1)_______ officially opened. (2)_______ the past month, our team has been working diligently.",
+    "questions": [
+      {
+        "id": "cloze_001_01", "question": "(1)",
+        "options": ["has", "have", "had", "having"], "correct": 0
+      },
+      {
+        "id": "cloze_001_02", "question": "(2)",
+        "options": ["During", "For", "Since", "While"], "correct": 0
+      }
+    ]
+  },
+  {
+    "id": "cloze_002",
+    "questionType": "cloze",
+    "level": "advanced",
+    "passage": "The CEO announced a new initiative aimed at (1)_______ sustainability. This plan, (2)_______ is expected to be costly, will benefit the company in the long run.",
+    "questions": [
+      {
+        "id": "cloze_002_01", "question": "(1)",
+        "options": ["promote", "promoting", "promotion", "promoted"], "correct": 1
+      },
+      {
+        "id": "cloze_002_02", "question": "(2)",
+        "options": ["that", "which", "who", "what"], "correct": 1
+      }
+    ]
+  }
+]</pre>
                         <button class="btn btn-success btn-copy" data-example="cloze-example">複製範例</button>
                     </div>
                     <div class="example-card">
                         <h4>📖 閱讀題 (Reading Comprehension)</h4>
-                        <pre id="reading-example">{
-  "id": "reading_001",
-  "questionType": "reading",
-  "level": "intermediate",
-  "passage": "Global Electronics Inc. is pleased to announce the launch of our new customer service initiative. Starting January 15th, we will extend our support hours to provide 24/7 assistance to customers worldwide.",
-  "questions": [
-    {
-      "id": "reading_001_01",
-      "question": "What is the main purpose of this announcement?",
-      "options": [
-        "To introduce a new product line",
-        "To announce extended customer service hours",
-        "To hire new employees", 
-        "To change company policies"
-      ],
-      "correct": 1,
-      "explanation": "The announcement focuses on extending support hours to 24/7."
-    }
-  ],
-  "tags": ["business_announcement", "customer_service"],
-  "difficulty": 0.7,
-  "createdAt": "2025-01-01T10:00:00Z",
-  "createdBy": "admin@example.com"
-}</pre>
+                        <pre id="reading-example">[
+  {
+    "id": "reading_001",
+    "questionType": "reading",
+    "level": "intermediate",
+    "passage": "Global Electronics Inc. is pleased to announce the launch of our new customer service initiative. We will now offer 24/7 support.",
+    "questions": [
+      {
+        "id": "reading_001_01",
+        "question": "What is the main purpose of this announcement?",
+        "options": ["To introduce a new product", "To announce extended service hours", "To hire new employees", "To change company policies"],
+        "correct": 1
+      }
+    ]
+  },
+  {
+    "id": "reading_002",
+    "questionType": "reading",
+    "level": "intermediate",
+    "passage": "Memo to all staff: The annual company picnic will be held on Saturday, June 25th at Green Valley Park. Please RSVP by June 15th.",
+    "questions": [
+      {
+        "id": "reading_002_01",
+        "question": "What are employees asked to do?",
+        "options": ["Bring their own food", "Work on Saturday", "Confirm their attendance", "Vote for a park"],
+        "correct": 2
+      }
+    ]
+  }
+]</pre>
                         <button class="btn btn-success btn-copy" data-example="reading-example">複製範例</button>
                     </div>
                 </div>
@@ -560,26 +577,26 @@
 
             <!-- Add Question Tab -->
             <div id="add-question-tab" class="content-panel tab-content hidden">
-                 <h2 style="color: #2c3e50; margin-bottom: 25px;">新增題目</h2>
+                 <h2 style="color: #2c3e50; margin-bottom: 25px;">新增/批次新增 題目</h2>
                  <div class="info-box">
                     <h4 style="color: #1976D2;">操作說明</h4>
                     <p style="color: #1565C0;">
-                        請先選擇題目類型，再從「JSON 格式範例」分頁複製一個範本，修改其內容後，將完整的 JSON 文字貼到下方的輸入框中，然後點擊「送出題目」。
+                        先選擇題目類型以載入對應的 JSON 範本，然後用您的題目內容取代範本中的資料。您可以在下方貼上單一題目或多筆題目的 JSON 陣列。
                     </p>
                 </div>
-                 <div class="form-group">
-                    <label for="question-type-select">1. 選擇題目類型</label>
-                    <select id="question-type-select">
+                <div class="form-group">
+                    <label for="question-type-selector">1. 選擇題目類型 (載入範本)</label>
+                    <select id="question-type-selector">
                         <option value="">-- 請選擇 --</option>
                         <option value="vocabulary">🔤 單字題 (Vocabulary)</option>
                         <option value="grammar">📝 文法題 (Grammar)</option>
                         <option value="cloze">📄 克漏字 (Cloze Test)</option>
                         <option value="reading">📖 閱讀題 (Reading Comprehension)</option>
                     </select>
-                 </div>
+                </div>
                  <div class="form-group">
-                    <label for="json-input-area">2. 貼上題目 JSON 內容</label>
-                    <textarea id="json-input-area" placeholder="在此貼上您的 JSON 題目內容..."></textarea>
+                    <label for="json-input-area">2. 貼上或編輯題目 JSON 內容</label>
+                    <textarea id="json-input-area" placeholder="選擇類型後，範本將顯示於此。可貼上單一物件或物件陣列..."></textarea>
                  </div>
                  <button id="submit-question-btn" class="btn btn-primary">送出題目</button>
                  <div id="add-question-feedback" class="hidden" style="margin-top: 20px;"></div>

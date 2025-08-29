@@ -14,4 +14,5 @@ export const firebaseConfig = {
   storageBucket: "englishexam-4d060.firebasestorage.app",
   messagingSenderId: "925981308715",
   appId: "1:925981308715:web:9fc005c75d0de61193f76e",
+  measurementId: "G-8TCGK7VKH1",
 };
