@@ -102,7 +102,7 @@ function listenForAuthState() {
     const { auth } = getFirebaseInstances();
     auth.onAuthStateChanged(user => {
         if (user) {
-            onLoginSuccess({ email: user.email });
+            onLoginSuccess(user); // Pass the full user object
         } else {
             handleLogout();
         }
@@ -512,7 +512,32 @@ async function loadUserRecords() {
         console.error("Error loading user records:", error);
         let errorMsg = `無法載入作答紀錄: ${error.message}`;
         if (error.code === 'permission-denied') {
-            errorMsg = `無法載入作答紀錄: 權限不足。<br><strong>提示：</strong>請確認您已依照 README.md 的指示，在 Firebase 中正確設定了 'admins' 集合與您的管理員 UID。`;
+            const adminUID = currentUser ? currentUser.uid : '無法取得，請重新登入';
+            const adminEmail = currentUser ? currentUser.email : 'N/A';
+            errorMsg = `
+                <div style="text-align: left;">
+                    <strong style="color: #c0392b; font-size: 1.2em;">❌ 權限不足 (Permission Denied)</strong>
+                    <p style="margin-top: 10px;">您目前登入的帳號 <strong>(${adminEmail})</strong> 未被授權為管理員，因此無法檢視使用者紀錄。</p>
+                    <p>請依照以下步驟，在您的 Firebase 專案中將此帳號設為管理員：</p>
+                    <ol style="margin-top: 15px; padding-left: 20px; line-height: 1.8;">
+                        <li>前往您的 <a href="https://console.firebase.google.com/" target="_blank" rel="noopener noreferrer">Firebase 控制台</a>，並進入 Cloud Firestore 資料庫。</li>
+                        <li>確認您有一個名為 <code>admins</code> 的集合 (collection)。如果沒有，請建立它。</li>
+                        <li>在 <code>admins</code> 集合中，點擊「新增文件」(Add document)。</li>
+                        <li>在「文件 ID」(Document ID) 欄位中，貼上您目前帳號的 User UID：
+                            <div style="background: #f4f4f4; padding: 8px; border-radius: 4px; margin: 8px 0; font-family: monospace; user-select: all; word-break: break-all;">${adminUID}</div>
+                        </li>
+                        <li>為此文件新增一個欄位 (field)：
+                            <ul style="list-style-type: none; padding-left: 15px; margin-top: 5px;">
+                                <li><strong>欄位名稱 (Field name):</strong> <code>role</code></li>
+                                <li><strong>欄位類型 (Field type):</strong> <code>string</code></li>
+                                <li><strong>欄位值 (Field value):</strong> <code>admin</code></li>
+                            </ul>
+                        </li>
+                        <li>點擊「儲存」(Save)。</li>
+                    </ol>
+                    <p style="margin-top: 15px;">完成上述設定後，請<strong>重新整理此頁面</strong>。</p>
+                </div>
+            `;
         }
         DOM.recordsList.innerHTML = `<div class="alert alert-error">${errorMsg}</div>`;
     }
