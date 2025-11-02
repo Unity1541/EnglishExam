@@ -48,6 +48,9 @@ const DOM = {
     submitQuestionBtn: document.getElementById('submit-question-btn'),
     addQuestionFeedback: document.getElementById('add-question-feedback'),
     firebaseModeInfoPanel: document.getElementById('firebase-mode-info-panel'),
+    manageActions: document.getElementById('manage-actions'),
+    deleteSelectedBtn: document.getElementById('delete-selected-btn'),
+    selectAllCheckbox: document.getElementById('select-all-checkbox'),
     // Edit Modal
     editModal: document.getElementById('edit-question-modal'),
     closeModalBtn: document.getElementById('close-modal-btn'),
@@ -69,6 +72,8 @@ document.addEventListener('DOMContentLoaded', () => {
     DOM.saveEditBtn.addEventListener('click', handleSaveEdit);
     DOM.recordsList.addEventListener('click', handleRecordAction);
     DOM.questionsList.addEventListener('click', handleQuestionAction);
+    DOM.deleteSelectedBtn.addEventListener('click', handleDeleteSelected);
+    DOM.selectAllCheckbox.addEventListener('change', handleSelectAll);
 
     DOM.tabsContainer.addEventListener('click', (e) => {
         if (e.target.classList.contains('tab')) {
@@ -369,9 +374,13 @@ function renderQuestions(questions) {
     DOM.questionsList.innerHTML = '';
     if (!questions || questions.length === 0) {
         DOM.questionsList.innerHTML = '<p>資料庫中沒有題目。</p>';
+        DOM.manageActions.classList.add('hidden');
         return;
     }
     
+    DOM.manageActions.classList.remove('hidden');
+    DOM.selectAllCheckbox.checked = false;
+
     // Group questions by type for rendering
     const grouped = questions.reduce((acc, q) => {
         (acc[q.questionType] = acc[q.questionType] || []).push(q);
@@ -386,11 +395,14 @@ function renderQuestions(questions) {
             const card = document.createElement('div');
             card.style.cssText = "background: #f8f9fa; border-radius: 8px; padding: 15px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;";
             card.innerHTML = `
-                <div style="flex-grow: 1;">
-                    <strong>ID: ${question.id}</strong>
-                    <p style="margin: 5px 0;">${question.question || 'Passage-based question'}</p>
+                <div style="display: flex; align-items: center; gap: 15px; flex-grow: 1;">
+                    <input type="checkbox" class="question-checkbox" data-id="${question.id}" style="transform: scale(1.5); flex-shrink: 0;">
+                    <div style="flex-grow: 1;">
+                        <strong>ID: ${question.id}</strong>
+                        <p style="margin: 5px 0;">${question.question || 'Passage-based question'}</p>
+                    </div>
                 </div>
-                <div>
+                <div style="flex-shrink: 0;">
                     <button class="btn btn-warning btn-edit-question" data-id="${question.id}" style="padding: 5px 10px; font-size: 0.8em; margin-right: 5px;">編輯</button>
                     <button class="btn btn-danger btn-delete-question" data-id="${question.id}" style="padding: 5px 10px; font-size: 0.8em;">刪除</button>
                 </div>
@@ -415,6 +427,46 @@ async function deleteQuestion(id) {
         loadAllQuestions(); // Refresh list
     } catch (error) {
         alert(`刪除失敗: ${error.message}`);
+    }
+}
+
+function handleSelectAll(e) {
+    const isChecked = e.target.checked;
+    DOM.questionsList.querySelectorAll('.question-checkbox').forEach(checkbox => {
+        checkbox.checked = isChecked;
+    });
+}
+
+async function handleDeleteSelected() {
+    const selectedCheckboxes = DOM.questionsList.querySelectorAll('.question-checkbox:checked');
+    const idsToDelete = Array.from(selectedCheckboxes).map(cb => cb.dataset.id);
+
+    if (idsToDelete.length === 0) {
+        alert('請先選取要刪除的題目。');
+        return;
+    }
+
+    if (!confirm(`確定要刪除選取的 ${idsToDelete.length} 筆題目嗎？此操作無法復原。`)) return;
+
+    try {
+        if (isFirebaseMode) {
+            const { db } = getFirebaseInstances();
+            const batch = db.batch();
+            idsToDelete.forEach(id => {
+                const docRef = db.collection('toeic_questions').doc(id);
+                batch.delete(docRef);
+            });
+            await batch.commit();
+        } else {
+            idsToDelete.forEach(id => {
+                delete mockDatabase.toeic_questions[id];
+            });
+        }
+        alert('選取的題目已成功刪除！');
+        loadAllQuestions(); // Refresh list
+    } catch (error) {
+        alert(`刪除失敗: ${error.message}`);
+        console.error("Batch delete failed:", error);
     }
 }
 

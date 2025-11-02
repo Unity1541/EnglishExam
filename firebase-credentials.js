@@ -14,5 +14,4 @@ export const firebaseConfig = {
   storageBucket: "englishexam-4d060.firebasestorage.app",
   messagingSenderId: "925981308715",
   appId: "1:925981308715:web:9fc005c75d0de61193f76e",
-  // measurementId: "G-XXXXXXXXXX" // 如果您使用 Google Analytics，請取消註解此行並提供您的測量 ID。
 };
