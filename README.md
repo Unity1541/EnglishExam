@@ -11,7 +11,7 @@
     *   使用自己的使用者帳號登入。
     *   根據管理員設定的題目與時間進行測驗。
     *   檢視個人的**測驗歷史紀錄**。
-    *   查看個人的**最佳成績紀錄**。
+    *   查看個人的**最佳成績紀錄**與**全站排行榜**。
     *   測驗結束後，可回顧包含詳解的答案。
 
 ---
@@ -115,6 +115,15 @@ service cloud.firestore {
       allow update: if false;
       allow delete: if isAdmin();
     }
+    
+    match /leaderboard_scores/{scoreId} {
+      // Allow a user to create a score entry for themselves
+      allow create: if request.auth != null && request.auth.uid == request.resource.data.userId;
+      // Allow any authenticated user to read the leaderboard
+      allow read: if request.auth != null;
+      // Disallow updates or deletes from the client-side for security
+      allow update, delete: if false;
+    }
 
     match /admins/{adminId} {
       allow get: if request.auth != null;
@@ -139,5 +148,17 @@ service cloud.firestore {
     *   **欄位類型 (Field type):** `string`
     *   **欄位值 (Field value):** `admin`
 5.  點擊 **"儲存"** (Save)。您現在已成功將該使用者指定為管理員。
+
+### 步驟七：建立 Firestore 索引 (排行榜功能)
+
+為了讓排行榜功能正常運作，您需要為 `leaderboard_scores` 集合手動建立一個索引。Firebase 會在您第一次嘗試讀取排行榜時，於瀏覽器的開發者工具中提供一個自動建立索引的連結。
+
+1.  完成所有設定後，使用一個**一般使用者帳號**登入測驗前端 (`index.html`)。
+2.  在主畫面上，排行榜區塊會顯示一則關於缺少索引的錯誤訊息。
+3.  打開您瀏覽器的**開發者工具** (通常是按 F12)，並切換到「主控台」(Console) 標籤頁。
+4.  您會看到一條來自 Firebase 的錯誤訊息，其中包含一個**長網址 (URL)**。
+5.  **點擊該網址**。它會將您導向 Firebase 控制台，並自動填好所有索引設定。
+6.  點擊 **"建立索引" (Create Index)** 按鈕。索引建立需要幾分鐘時間。
+7.  建立完成後，重新整理測驗頁面，排行榜即可正常顯示。
 
 **設定完成！現在您可以將專案部署到任何地方，它都能正常運作。**

@@ -1,480 +1,458 @@
 <!DOCTYPE html>
 <html lang="zh-TW">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>TOEIC Online Test</title>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>線上轉學考測驗系統</title>
     <style>
-      :root {
-        --primary-color: #667eea;
-        --secondary-color: #764ba2;
-        --text-color: #2c3e50;
-        --bg-light: #f4f7f6;
-        --white: #ffffff;
-        --gray: #e9ecef;
-        --success: #2ecc71;
-        --danger: #e74c3c;
-      }
-
-      * {
-        margin: 0;
-        padding: 0;
-        box-sizing: border-box;
-      }
-
-      body {
-        font-family: "Arial", "Microsoft JhengHei", sans-serif;
-        background: linear-gradient(
-          135deg,
-          var(--primary-color) 0%,
-          var(--secondary-color) 100%
-        );
-        min-height: 100vh;
-        color: var(--text-color);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        padding: 20px;
-      }
-
-      .quiz-container {
-        width: 100%;
-        max-width: 800px;
-        background: rgba(255, 255, 255, 0.98);
-        backdrop-filter: blur(10px);
-        border-radius: 20px;
-        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
-        padding: 40px;
-        text-align: center;
-        transition: all 0.3s ease;
-        position: relative;
-        display: flex;
-        flex-direction: column;
-      }
-
-      .header {
-        margin-bottom: 30px;
-      }
-
-      .header h1 {
-        font-size: 2.5em;
-        background: linear-gradient(
-          45deg,
-          var(--primary-color),
-          var(--secondary-color)
-        );
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        background-clip: text;
-        margin-bottom: 10px;
-      }
-
-      .header p {
-        color: #7f8c8d;
-        font-size: 1.1em;
-      }
-
-      #start-screen p.instructions {
-        background-color: var(--bg-light);
-        padding: 15px;
-        border-radius: 10px;
-        margin: 20px 0;
-        text-align: left;
-        border-left: 5px solid var(--primary-color);
-      }
-
-      .btn {
-        padding: 15px 40px;
-        border: none;
-        border-radius: 30px;
-        font-size: 1.1em;
-        font-weight: 700;
-        cursor: pointer;
-        transition: all 0.3s ease;
-        text-transform: uppercase;
-        letter-spacing: 1px;
-        display: inline-block;
-        margin-top: 20px;
-      }
-
-      .btn-start {
-        background: linear-gradient(
-          45deg,
-          var(--primary-color),
-          var(--secondary-color)
-        );
-        color: var(--white);
-      }
-
-      .btn-start:hover {
-        transform: translateY(-3px);
-        box-shadow: 0 8px 25px rgba(102, 126, 234, 0.35);
-      }
-
-      .btn-next {
-        background-color: var(--success);
-        color: var(--white);
-      }
-
-      .btn-next:hover {
-        background-color: #27ae60;
-        transform: translateY(-2px);
-      }
-
-      .btn-secondary {
-        background: #95a5a6;
-        color: white;
-        padding: 10px 20px;
-        font-size: 0.9em;
-        margin: 0;
-        border-radius: 20px;
-      }
-
-      .hidden {
-        display: none;
-      }
-
-      #quiz-screen {
-        text-align: left;
-      }
-
-      .quiz-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 25px;
-        padding-bottom: 15px;
-        border-bottom: 2px solid var(--gray);
-      }
-
-      .user-info {
-        align-self: flex-end;
-        background: rgba(255, 255, 255, 0.8);
-        padding: 10px 15px;
-        border-radius: 20px;
-        display: flex;
-        align-items: center;
-        gap: 15px;
-        font-size: 0.9em;
-        margin-bottom: 20px;
-      }
-
-      #timer,
-      #question-counter {
-        background: var(--bg-light);
-        padding: 8px 15px;
-        border-radius: 20px;
-        font-weight: 600;
-      }
-
-      #timer {
-        color: var(--danger);
-      }
-
-      .question-area h3 {
-        font-size: 1.4em;
-        margin-bottom: 20px;
-        line-height: 1.6;
-      }
-
-      .question-area .passage {
-        background: var(--bg-light);
-        padding: 15px;
-        border-radius: 8px;
-        margin-bottom: 20px;
-        line-height: 1.7;
-        max-height: 200px;
-        overflow-y: auto;
-        white-space: pre-wrap;
-      }
-
-      .options-list {
-        list-style: none;
-        margin: 0;
-        padding: 0;
-      }
-
-      .options-list li {
-        background: var(--bg-light);
-        margin-bottom: 10px;
-        border-radius: 10px;
-        transition: all 0.2s ease;
-      }
-
-      .options-list label {
-        display: block;
-        padding: 15px 20px;
-        cursor: pointer;
-        width: 100%;
-        border: 2px solid transparent;
-        border-radius: 10px;
-      }
-
-      .options-list input[type="radio"] {
-        display: none;
-      }
-
-      .options-list input[type="radio"]:checked + label {
-        background-color: #d8dffc;
-        border-color: var(--primary-color);
-        font-weight: bold;
-      }
-
-      #results-screen h2,
-      #review-screen h2 {
-        font-size: 2em;
-        margin-bottom: 20px;
-      }
-
-      #results-screen .score {
-        font-size: 3.5em;
-        font-weight: bold;
-        background: linear-gradient(
-          45deg,
-          var(--primary-color),
-          var(--secondary-color)
-        );
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        background-clip: text;
-      }
-
-      #results-screen .details {
-        font-size: 1.2em;
-        margin-top: 10px;
-        color: #7f8c8d;
-      }
-
-      #loading-message,
-      #error-message {
-        font-size: 1.2em;
-        padding: 20px;
-      }
-
-      #error-message {
-        background-color: rgba(231, 76, 60, 0.1);
-        color: var(--danger);
-        border-radius: 10px;
-      }
-
-      /* Login Form */
-      #login-screen .form-group {
-        margin-bottom: 20px;
-        text-align: left;
-      }
-      #login-screen label {
-        display: block;
-        font-weight: 600;
-        margin-bottom: 8px;
-      }
-      #login-screen input {
-        width: 100%;
-        padding: 12px 15px;
-        border: 2px solid var(--gray);
-        border-radius: 10px;
-        font-size: 1em;
-      }
-
-      /* History & Review */
-      .user-data-grid {
-        margin-top: 40px;
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 30px;
-        text-align: left;
-      }
-
-      .data-section h3 {
-        border-bottom: 2px solid var(--gray);
-        padding-bottom: 10px;
-        margin-bottom: 15px;
-      }
-      .data-list {
-        list-style: none;
-        max-height: 200px;
-        overflow-y: auto;
-      }
-      .data-list li {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        padding: 12px;
-        background: var(--bg-light);
-        border-radius: 8px;
-        margin-bottom: 8px;
-      }
-
-      #personal-best-list {
-        padding: 0;
-      }
-
-      #personal-best-list li {
-        padding: 12px;
-        background: var(--bg-light);
-        border-radius: 8px;
-        margin-bottom: 8px;
-        display: flex;
-        justify-content: space-between;
-      }
-
-      #review-screen {
-        text-align: left;
-      }
-      .review-question {
-        background: var(--bg-light);
-        padding: 20px;
-        margin-bottom: 15px;
-        border-radius: 10px;
-        border-left: 5px solid var(--gray);
-      }
-      .review-question.correct {
-        border-left-color: var(--success);
-      }
-      .review-question.incorrect {
-        border-left-color: var(--danger);
-      }
-      .review-question .explanation {
-        background: var(--white);
-        margin-top: 15px;
-        padding: 10px;
-        border-radius: 5px;
-        border: 1px solid var(--gray);
-        font-style: italic;
-      }
-
-      @media (max-width: 768px) {
-        .user-data-grid {
-          grid-template-columns: 1fr;
+        :root {
+            --primary-color: #667eea;
+            --secondary-color: #764ba2;
+            --text-color: #2c3e50;
+            --bg-light: #f4f7f6;
+            --white: #ffffff;
+            --gray: #e9ecef;
+            --success: #2ecc71;
+            --danger: #e74c3c;
         }
-      }
-      @media (max-width: 600px) {
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial', 'Microsoft JhengHei', sans-serif;
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+            min-height: 100vh;
+            color: var(--text-color);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
         .quiz-container {
-          padding: 20px;
+            width: 100%;
+            max-width: 950px; /* Increased max-width for 3 columns */
+            background: rgba(255, 255, 255, 0.98);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+            padding: 40px;
+            text-align: center;
+            transition: all 0.3s ease;
+            position: relative;
+            display: flex;
+            flex-direction: column;
         }
+
+        .header {
+            margin-bottom: 30px;
+        }
+
         .header h1 {
-          font-size: 2em;
+            font-size: 2.5em;
+            background: linear-gradient(45deg, var(--primary-color), var(--secondary-color));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 10px;
         }
+
+        .header p {
+            color: #7f8c8d;
+            font-size: 1.1em;
+        }
+        
+        #start-screen p.instructions {
+            background-color: var(--bg-light);
+            padding: 15px;
+            border-radius: 10px;
+            margin: 20px 0;
+            text-align: left;
+            border-left: 5px solid var(--primary-color);
+        }
+
         .btn {
-          width: 100%;
+            padding: 15px 40px;
+            border: none;
+            border-radius: 30px;
+            font-size: 1.1em;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            display: inline-block;
+            margin-top: 20px;
         }
+
+        .btn-start {
+            background: linear-gradient(45deg, var(--primary-color), var(--secondary-color));
+            color: var(--white);
+        }
+
+        .btn-start:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.35);
+        }
+        
+        .btn-next {
+            background-color: var(--success);
+            color: var(--white);
+        }
+        
+        .btn-next:hover {
+            background-color: #27ae60;
+            transform: translateY(-2px);
+        }
+        
+        .btn-secondary {
+            background: #95a5a6;
+            color: white;
+            padding: 10px 20px;
+            font-size: 0.9em;
+            margin: 0;
+            border-radius: 20px;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        #quiz-screen {
+            text-align: left;
+        }
+
+        .quiz-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid var(--gray);
+        }
+        
         .user-info {
-          align-self: stretch;
-          margin-bottom: 20px;
-          justify-content: center;
+            align-self: flex-end;
+            background: rgba(255,255,255,0.8);
+            padding: 10px 15px;
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            font-size: 0.9em;
+            margin-bottom: 20px;
         }
-      }
+
+        #timer, #question-counter {
+            background: var(--bg-light);
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-weight: 600;
+        }
+        
+        #timer {
+            color: var(--danger);
+        }
+
+        .question-area h3 {
+            font-size: 1.4em;
+            margin-bottom: 20px;
+            line-height: 1.6;
+        }
+        
+        .question-area .passage {
+            background: var(--bg-light);
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            line-height: 1.7;
+            max-height: 200px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+        }
+
+        .options-list {
+            list-style: none;
+            margin: 0;
+            padding: 0;
+        }
+
+        .options-list li {
+            background: var(--bg-light);
+            margin-bottom: 10px;
+            border-radius: 10px;
+            transition: all 0.2s ease;
+        }
+
+        .options-list label {
+            display: block;
+            padding: 15px 20px;
+            cursor: pointer;
+            width: 100%;
+            border: 2px solid transparent;
+            border-radius: 10px;
+        }
+        
+        .options-list input[type="radio"] {
+            display: none;
+        }
+
+        .options-list input[type="radio"]:checked + label {
+            background-color: #d8dffc;
+            border-color: var(--primary-color);
+            font-weight: bold;
+        }
+
+        #results-screen h2, #review-screen h2 {
+            font-size: 2em;
+            margin-bottom: 20px;
+        }
+        
+        #results-screen .score {
+            font-size: 3.5em;
+            font-weight: bold;
+            background: linear-gradient(45deg, var(--primary-color), var(--secondary-color));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        #results-screen .details {
+            font-size: 1.2em;
+            margin-top: 10px;
+            color: #7f8c8d;
+        }
+
+        #loading-message, #error-message {
+            font-size: 1.2em;
+            padding: 20px;
+        }
+
+        #error-message {
+            background-color: rgba(231, 76, 60, 0.1);
+            color: var(--danger);
+            border-radius: 10px;
+        }
+        
+        /* Login Form */
+        #login-screen .form-group {
+            margin-bottom: 20px;
+            text-align: left;
+        }
+        #login-screen label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+        #login-screen input {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid var(--gray);
+            border-radius: 10px;
+            font-size: 1em;
+        }
+        
+        /* History & Review */
+        .user-data-grid {
+            margin-top: 40px;
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 25px;
+            text-align: left;
+        }
+        
+        .data-section h3 {
+            border-bottom: 2px solid var(--gray);
+            padding-bottom: 10px;
+            margin-bottom: 15px;
+        }
+        .data-list {
+            list-style: none;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+        .data-list li {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px;
+            background: var(--bg-light);
+            border-radius: 8px;
+            margin-bottom: 8px;
+        }
+
+        #personal-best-list, #leaderboard-list {
+            padding: 0;
+        }
+
+        #personal-best-list li, #leaderboard-list li {
+            padding: 12px;
+            background: var(--bg-light);
+            border-radius: 8px;
+            margin-bottom: 8px;
+            display: flex;
+            justify-content: space-between;
+        }
+        
+        #review-screen { text-align: left; }
+        .review-question {
+            background: var(--bg-light);
+            padding: 20px;
+            margin-bottom: 15px;
+            border-radius: 10px;
+            border-left: 5px solid var(--gray);
+        }
+        .review-question.correct { border-left-color: var(--success); }
+        .review-question.incorrect { border-left-color: var(--danger); }
+        .review-question .explanation {
+            background: var(--white);
+            margin-top: 15px;
+            padding: 10px;
+            border-radius: 5px;
+            border: 1px solid var(--gray);
+            font-style: italic;
+        }
+
+
+        @media (max-width: 992px) {
+            .user-data-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+        @media (max-width: 600px) {
+            .quiz-container {
+                padding: 20px;
+                max-width: 800px; /* Revert max-width on smaller screens */
+            }
+            .header h1 {
+                font-size: 2em;
+            }
+            .btn {
+                width: 100%;
+            }
+            .user-info {
+                align-self: stretch;
+                margin-bottom: 20px;
+                justify-content: center;
+            }
+        }
     </style>
-    <link rel="stylesheet" href="/index.css" />
-  </head>
-  <body>
+<link rel="stylesheet" href="/index.css">
+</head>
+<body>
     <div id="app-container">
-      <div class="quiz-container">
-        <!-- User Info (visible when logged in) -->
-        <div id="user-info" class="user-info hidden">
-          <span id="user-email"></span>
-          <button id="logout-btn" class="btn-secondary">登出</button>
-        </div>
+        <div class="quiz-container">
 
-        <!-- Login Screen -->
-        <div id="login-screen">
-          <div class="header">
-            <h1>轉學考模擬測驗登入</h1>
-            <p>請使用您的帳號登入以開始測驗</p>
-          </div>
-          <div class="form-group">
-            <label for="email">電子郵件</label>
-            <input type="email" id="email" placeholder="student@example.com" />
-          </div>
-          <div class="form-group">
-            <label for="password">密碼</label>
-            <input type="password" id="password" placeholder="********" />
-          </div>
-          <button id="login-btn" class="btn btn-start">登入</button>
-          <div
-            id="login-error"
-            class="hidden"
-            style="margin-top: 15px; color: var(--danger)"
-          ></div>
-        </div>
-
-        <!-- Start Screen -->
-        <div id="start-screen" class="hidden">
-          <div class="header">
-            <h1>轉學考模擬測驗</h1>
-            <p>準備接受殘酷的事實了嗎？</p>
-          </div>
-          <div id="loading-message">
-            <p>🚀 正在載入測驗設定，請稍候...</p>
-          </div>
-          <div id="error-message" class="hidden">
-            <p>❌ 載入測驗失敗！</p>
-            <p>可能是管理員尚未設定 Firebase 或題庫。請聯繫系統管理員。</p>
-          </div>
-          <div id="start-content" class="hidden">
-            <p class="instructions">
-              <strong>測驗時間：</strong
-              ><span id="test-duration">--</span> 分鐘<br />
-              <strong>題目總數：</strong
-              ><span id="total-questions">--</span> 題<br />
-              點擊下方按鈕，測驗將立即開始。
-            </p>
-            <button id="start-btn" class="btn btn-start">開始新測驗</button>
-
-            <div class="user-data-grid">
-              <div id="history-section" class="data-section">
-                <h3>過往測驗紀錄</h3>
-                <ul id="history-list" class="data-list">
-                  <!-- History items will be inserted here -->
-                </ul>
-              </div>
-              <div id="personal-best-section" class="data-section">
-                <h3>🏆 個人最佳紀錄</h3>
-                <ul id="personal-best-list" class="data-list">
-                  <!-- Personal best items will be inserted here -->
-                </ul>
-              </div>
+            <!-- User Info (visible when logged in) -->
+            <div id="user-info" class="user-info hidden">
+                <span id="user-email"></span>
+                <button id="logout-btn" class="btn-secondary">登出</button>
             </div>
-          </div>
-        </div>
 
-        <!-- Quiz Screen -->
-        <div id="quiz-screen" class="hidden">
-          <div class="quiz-header">
-            <span id="question-counter"></span>
-            <span id="timer"></span>
-          </div>
-          <div class="question-area">
-            <div id="question-passage" class="passage hidden"></div>
-            <h3 id="question-text"></h3>
-            <ul id="options-list" class="options-list">
-              <!-- Options will be dynamically inserted here -->
-            </ul>
-          </div>
-          <button id="next-btn" class="btn btn-next">下一題</button>
-        </div>
+            <!-- Login Screen -->
+            <div id="login-screen">
+                <div class="header">
+                    <h1>轉學考測驗登入</h1>
+                    <p>請使用您的帳號登入以開始測驗</p>
+                </div>
+                <div class="form-group">
+                    <label for="email">電子郵件</label>
+                    <input type="email" id="email" placeholder="student@example.com">
+                </div>
+                <div class="form-group">
+                    <label for="password">密碼</label>
+                    <input type="password" id="password" placeholder="********">
+                </div>
+                <button id="login-btn" class="btn btn-start">登入</button>
+                <div id="login-error" class="hidden" style="margin-top: 15px; color: var(--danger);"></div>
+            </div>
 
-        <!-- Results Screen -->
-        <div id="results-screen" class="hidden">
-          <h2>測驗完成！</h2>
-          <p>您的成績</p>
-          <div id="score" class="score"></div>
-          <p id="score-details" class="details"></p>
-          <button id="review-btn" class="btn btn-secondary">回顧答案</button>
-          <button id="restart-btn" class="btn btn-start">返回主畫面</button>
-        </div>
+            <!-- Start Screen -->
+            <div id="start-screen" class="hidden">
+                <div class="header">
+                    <h1>英文化學模擬測驗</h1>
+                    <p>準備好挑戰您的能力了嗎？</p>
+                </div>
+                <div id="loading-message">
+                    <p>🚀 正在載入測驗設定，請稍候...</p>
+                </div>
+                <div id="error-message" class="hidden">
+                    <p>❌ 載入測驗失敗！</p>
+                    <p>可能是管理員尚未設定 Firebase 或題庫。請聯繫系統管理員。</p>
+                </div>
+                <div id="start-content" class="hidden">
+                    <p class="instructions">
+                        <strong>測驗時間：</strong><span id="test-duration">--</span> 分鐘<br>
+                        <strong>題目總數：</strong><span id="total-questions">--</span> 題<br>
+                        點擊下方按鈕，測驗將立即開始。
+                    </p>
+                    <button id="start-btn" class="btn btn-start">開始新測驗</button>
+                    
+                    <div class="user-data-grid">
+                        <div id="history-section" class="data-section">
+                            <h3>過往測驗紀錄</h3>
+                            <ul id="history-list" class="data-list">
+                                <!-- History items will be inserted here -->
+                            </ul>
+                        </div>
+                        <div id="personal-best-section" class="data-section">
+                            <h3>🏆 個人最佳紀錄</h3>
+                            <ul id="personal-best-list" class="data-list">
+                                <!-- Personal best items will be inserted here -->
+                            </ul>
+                        </div>
+                        <div id="leaderboard-section" class="data-section">
+                            <h3>🚀 全站排行榜</h3>
+                            <ul id="leaderboard-list" class="data-list">
+                                <!-- Leaderboard items will be inserted here -->
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
 
-        <!-- Review Screen -->
-        <div id="review-screen" class="hidden">
-          <h2>答案詳解</h2>
-          <div id="review-content">
-            <!-- Review questions will be inserted here -->
-          </div>
-          <button id="back-to-start-btn" class="btn btn-start">
-            返回主畫面
-          </button>
+            <!-- Quiz Screen -->
+            <div id="quiz-screen" class="hidden">
+                <div class="quiz-header">
+                    <span id="question-counter"></span>
+                    <span id="timer"></span>
+                </div>
+                <div class="question-area">
+                    <div id="question-passage" class="passage hidden"></div>
+                    <h3 id="question-text"></h3>
+                    <ul id="options-list" class="options-list">
+                        <!-- Options will be dynamically inserted here -->
+                    </ul>
+                </div>
+                <button id="next-btn" class="btn btn-next">下一題</button>
+            </div>
+
+            <!-- Results Screen -->
+            <div id="results-screen" class="hidden">
+                <h2>測驗完成！</h2>
+                <p>您的成績</p>
+                <div id="score" class="score"></div>
+                <p id="score-details" class="details"></p>
+                <button id="review-btn" class="btn btn-secondary">回顧答案</button>
+                <button id="restart-btn" class="btn btn-start">返回主畫面</button>
+            </div>
+
+            <!-- Review Screen -->
+            <div id="review-screen" class="hidden">
+                <h2>答案詳解</h2>
+                <div id="review-content">
+                    <!-- Review questions will be inserted here -->
+                </div>
+                <button id="back-to-start-btn" class="btn btn-start">返回主畫面</button>
+            </div>
+
         </div>
-      </div>
     </div>
+
 
     <!-- Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
@@ -484,6 +462,6 @@
     <!-- App Scripts -->
     <script type="module" src="./app.js"></script>
 
-    <script type="module" src="/index.tsx"></script>
-  </body>
+<script type="module" src="/index.tsx"></script>
+</body>
 </html>

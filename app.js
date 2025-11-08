@@ -39,6 +39,7 @@ const DOM = {
     totalQuestionsSpan: document.getElementById('total-questions'),
     historyList: document.getElementById('history-list'),
     personalBestList: document.getElementById('personal-best-list'),
+    leaderboardList: document.getElementById('leaderboard-list'),
     quizScreen: document.getElementById('quiz-screen'),
     questionCounter: document.getElementById('question-counter'),
     timerDisplay: document.getElementById('timer'),
@@ -181,7 +182,7 @@ async function loadInitialData() {
         quizState.questions = processQuestions(allQuestions);
 
         if (quizState.questions.length > 0) {
-            await Promise.all([loadQuizHistory(), loadPersonalBests()]);
+            await Promise.all([loadQuizHistory(), loadPersonalBests(), loadLeaderboard()]);
             showStartScreen();
         } else {
              showError('雖然找到題庫，但處理後沒有可用的題目。');
@@ -228,6 +229,16 @@ function showStartScreen() {
 }
 
 // --- Quiz History & Personal Bests ---
+function maskEmail(email) {
+    if (!email || email.indexOf('@') === -1) return '匿名使用者';
+    const [name, domain] = email.split('@');
+    if (name.length <= 2) {
+        return `${name.charAt(0)}*@${domain}`;
+    }
+    const maskedName = name.charAt(0) + '*'.repeat(name.length - 2) + name.slice(-1);
+    return `${maskedName}@${domain}`;
+}
+
 async function loadQuizHistory() {
     const { db } = getFirebaseInstances();
     DOM.historyList.innerHTML = '<li>正在載入紀錄...</li>';
@@ -312,6 +323,47 @@ async function loadPersonalBests() {
     } catch (error) {
         console.error("Error loading personal bests:", error);
         DOM.personalBestList.innerHTML = `<li>無法載入最佳紀錄。資料庫索引尚未設定，請聯繫管理員。</li>`;
+    }
+}
+
+async function loadLeaderboard() {
+    const { db } = getFirebaseInstances();
+    DOM.leaderboardList.innerHTML = '<li>正在載入排行榜...</li>';
+    try {
+        const querySnapshot = await db.collection('leaderboard_scores')
+            .orderBy('scorePercentage', 'desc')
+            .limit(5)
+            .get();
+
+        if (querySnapshot.empty) {
+            DOM.leaderboardList.innerHTML = '<li>尚無紀錄，成為第一個上榜的人吧！</li>';
+            return;
+        }
+
+        const topAttempts = [];
+        querySnapshot.forEach(doc => {
+            topAttempts.push(doc.data());
+        });
+
+        DOM.leaderboardList.innerHTML = '';
+        topAttempts.forEach(attempt => {
+            const li = document.createElement('li');
+            const maskedEmail = maskEmail(attempt.userEmail);
+            li.innerHTML = `
+                <span>${maskedEmail}</span>
+                <strong>${attempt.scorePercentage.toFixed(1)}%</strong>
+            `;
+            DOM.leaderboardList.appendChild(li);
+        });
+    } catch (error) {
+        console.error("Error loading leaderboard:", error);
+        let errorMessage = '無法載入排行榜。';
+        if (error.code === 'failed-precondition') {
+            errorMessage = '無法載入排行榜。Firestore 需要一個索引來執行此查詢。請管理員檢查瀏覽器開發者主控台，並點擊其中的連結來自動建立索引。';
+        } else if (error.code === 'permission-denied') {
+            errorMessage += ' 可能是 Firestore 安全規則設定錯誤，請聯繫管理員。';
+        }
+        DOM.leaderboardList.innerHTML = `<li>${errorMessage}</li>`;
     }
 }
 
@@ -411,21 +463,39 @@ function calculateScore() {
 async function saveQuizAttempt() {
     if (!quizState.currentUser) return; // Don't save if not logged in
     const { db } = getFirebaseInstances();
+    
+    const scorePercentage = (quizState.score / quizState.questions.length) * 100;
+    const serverTimestamp = firebase.firestore.FieldValue.serverTimestamp();
+
+    // The detailed attempt for personal review
     const attempt = {
         userId: quizState.currentUser.uid,
         userEmail: quizState.currentUser.email,
-        timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+        timestamp: serverTimestamp,
         score: quizState.score,
         totalQuestions: quizState.questions.length,
-        scorePercentage: (quizState.score / quizState.questions.length) * 100,
+        scorePercentage: scorePercentage,
         userAnswers: quizState.userAnswers,
         questions: quizState.questions, // Store a snapshot of the questions
+    };
+
+    // The public score for the leaderboard
+    const leaderboardEntry = {
+        userId: quizState.currentUser.uid,
+        userEmail: quizState.currentUser.email,
+        timestamp: serverTimestamp,
+        scorePercentage: scorePercentage,
     };
 
     try {
         const docRef = await db.collection('quiz_attempts').add(attempt);
         quizState.currentAttemptId = docRef.id; // Save ID for immediate review
         console.log("Quiz attempt saved with ID:", docRef.id);
+        
+        // Also save to the public leaderboard collection
+        await db.collection('leaderboard_scores').add(leaderboardEntry);
+        console.log("Leaderboard score saved.");
+
     } catch (error) {
         console.error("Error saving quiz attempt:", error);
     }
@@ -502,4 +572,5 @@ function resetToStartScreen() {
     // Reload history and personal bests to show the latest attempt
     loadQuizHistory();
     loadPersonalBests();
+    loadLeaderboard();
 }
