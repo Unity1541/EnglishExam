@@ -58,6 +58,8 @@ const DOM = {
     saveEditBtn: document.getElementById('save-edit-btn'),
     editingQuestionId: document.getElementById('editing-question-id'),
     editFeedback: document.getElementById('edit-feedback'),
+    formatSupBtn: document.getElementById('format-sup-btn'),
+    formatSubBtn: document.getElementById('format-sub-btn'),
 };
 
 // --- Main App Initialization ---
@@ -74,6 +76,8 @@ document.addEventListener('DOMContentLoaded', () => {
     DOM.questionsList.addEventListener('click', handleQuestionAction);
     DOM.deleteSelectedBtn.addEventListener('click', handleDeleteSelected);
     DOM.selectAllCheckbox.addEventListener('change', handleSelectAll);
+    DOM.formatSupBtn.addEventListener('click', () => formatTextInTextarea(DOM.editJsonArea, 'sup'));
+    DOM.formatSubBtn.addEventListener('click', () => formatTextInTextarea(DOM.editJsonArea, 'sub'));
 
     DOM.tabsContainer.addEventListener('click', (e) => {
         if (e.target.classList.contains('tab')) {
@@ -217,6 +221,23 @@ function showFeedback(element, message, type) {
     } else {
         element.classList.add('alert', `alert-${type}`);
         element.classList.remove('hidden');
+    }
+}
+
+// --- Text Formatting ---
+function formatTextInTextarea(textarea, tag) {
+    const start = textarea.selectionStart;
+    const end = textarea.selectionEnd;
+    const selectedText = textarea.value.substring(start, end);
+
+    if (selectedText) {
+        const newText = `<${tag}>${selectedText}</${tag}>`;
+        textarea.value = textarea.value.substring(0, start) + newText + textarea.value.substring(end);
+        
+        // Adjust selection to be after the inserted text
+        textarea.selectionStart = start + newText.length;
+        textarea.selectionEnd = start + newText.length;
+        textarea.focus();
     }
 }
 

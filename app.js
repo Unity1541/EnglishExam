@@ -409,13 +409,13 @@ function displayQuestion() {
     DOM.questionCounter.textContent = `Question ${quizState.currentQuestionIndex + 1} / ${quizState.questions.length}`;
 
     if (question.passage) {
-        DOM.questionPassage.textContent = question.passage;
+        DOM.questionPassage.innerHTML = question.passage;
         DOM.questionPassage.classList.remove('hidden');
     } else {
         DOM.questionPassage.classList.add('hidden');
     }
     
-    DOM.questionText.textContent = question.displayQuestion || question.question;
+    DOM.questionText.innerHTML = question.displayQuestion || question.question;
 
     DOM.optionsList.innerHTML = '';
     question.options.forEach((option, index) => {
