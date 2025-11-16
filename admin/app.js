@@ -743,6 +743,7 @@ async function printRecord(attemptId) {
                 <div class="question-block ${resultClass}">
                     <p><strong>Q${index + 1}: ${q.displayQuestion || q.question}</strong></p>
                     ${q.passage ? `<div class="passage">${q.passage}</div>` : ''}
+                    ${q.imageUrl ? `<div style="margin: 10px 0;"><img src="${q.imageUrl}" alt="Question Image" style="max-width: 250px; border-radius: 8px;"></div>` : ''}
                     <ul>
                         ${q.options.map((opt, i) => `<li>${String.fromCharCode(65 + i)}. ${opt}</li>`).join('')}
                     </ul>

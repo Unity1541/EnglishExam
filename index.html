@@ -117,6 +117,11 @@
             margin: 0;
             border-radius: 20px;
         }
+        
+        .btn-secondary:hover {
+             background: #7f8c8d;
+             transform: translateY(-2px);
+        }
 
         .hidden {
             display: none;
@@ -205,6 +210,17 @@
             background-color: #d8dffc;
             border-color: var(--primary-color);
             font-weight: bold;
+        }
+
+        .quiz-navigation {
+            display: flex;
+            justify-content: space-between;
+            gap: 15px;
+            margin-top: 30px;
+        }
+        
+        .quiz-navigation .btn {
+            margin-top: 0;
         }
 
         #results-screen h2, #review-screen h2 {
@@ -334,6 +350,13 @@
             .btn {
                 width: 100%;
             }
+             .quiz-navigation {
+                flex-direction: column;
+                gap: 10px;
+            }
+            .quiz-navigation .btn {
+                width: 100%;
+            }
             .user-info {
                 align-self: stretch;
                 margin-bottom: 20px;
@@ -422,13 +445,19 @@
                     <span id="timer"></span>
                 </div>
                 <div class="question-area">
+                    <div id="question-image-container" class="hidden" style="text-align: center; margin-bottom: 20px;">
+                        <img id="question-image" src="" alt="Question Image" style="max-width: 100%; max-height: 300px; border-radius: 10px;">
+                    </div>
                     <div id="question-passage" class="passage hidden"></div>
                     <h3 id="question-text"></h3>
                     <ul id="options-list" class="options-list">
                         <!-- Options will be dynamically inserted here -->
                     </ul>
                 </div>
-                <button id="next-btn" class="btn btn-next">下一題</button>
+                <div class="quiz-navigation">
+                    <button id="prev-btn" class="btn btn-secondary" style="background: #bdc3c7;">上一題</button>
+                    <button id="next-btn" class="btn btn-next">下一題</button>
+                </div>
             </div>
 
             <!-- Results Screen -->

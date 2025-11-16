@@ -43,9 +43,12 @@ const DOM = {
     quizScreen: document.getElementById('quiz-screen'),
     questionCounter: document.getElementById('question-counter'),
     timerDisplay: document.getElementById('timer'),
+    questionImageContainer: document.getElementById('question-image-container'),
+    questionImage: document.getElementById('question-image'),
     questionPassage: document.getElementById('question-passage'),
     questionText: document.getElementById('question-text'),
     optionsList: document.getElementById('options-list'),
+    prevBtn: document.getElementById('prev-btn'),
     nextBtn: document.getElementById('next-btn'),
     resultsScreen: document.getElementById('results-screen'),
     scoreDisplay: document.getElementById('score'),
@@ -62,6 +65,7 @@ document.addEventListener('DOMContentLoaded', () => {
     DOM.loginBtn.addEventListener('click', handleLogin);
     DOM.logoutBtn.addEventListener('click', handleLogout);
     DOM.startBtn.addEventListener('click', startQuiz);
+    DOM.prevBtn.addEventListener('click', handlePreviousQuestion);
     DOM.nextBtn.addEventListener('click', handleNextQuestion);
     DOM.reviewBtn.addEventListener('click', showReviewScreen);
     DOM.restartBtn.addEventListener('click', resetToStartScreen);
@@ -373,7 +377,7 @@ async function loadLeaderboard() {
 function startQuiz() {
     // Reset state for a new quiz
     quizState.currentQuestionIndex = 0;
-    quizState.userAnswers = [];
+    quizState.userAnswers = Array(quizState.questions.length).fill(-1);
     quizState.score = 0;
     quizState.timeRemaining = quizState.testDuration * 60;
     quizState.currentAttemptId = null;
@@ -408,6 +412,15 @@ function displayQuestion() {
     
     DOM.questionCounter.textContent = `Question ${quizState.currentQuestionIndex + 1} / ${quizState.questions.length}`;
 
+    // Handle Image
+    if (question.imageUrl) {
+        DOM.questionImage.src = question.imageUrl;
+        DOM.questionImageContainer.classList.remove('hidden');
+    } else {
+        DOM.questionImageContainer.classList.add('hidden');
+    }
+    
+    // Handle Passage
     if (question.passage) {
         DOM.questionPassage.innerHTML = question.passage;
         DOM.questionPassage.classList.remove('hidden');
@@ -426,14 +439,38 @@ function displayQuestion() {
         `;
         DOM.optionsList.appendChild(li);
     });
+    
+    // Restore previous answer if it exists
+    const previousAnswer = quizState.userAnswers[quizState.currentQuestionIndex];
+    if (previousAnswer !== -1) {
+        const radioToCheck = document.getElementById(`option${previousAnswer}`);
+        if (radioToCheck) {
+            radioToCheck.checked = true;
+        }
+    }
 
+    // Update button visibility and text
+    DOM.prevBtn.classList.toggle('hidden', quizState.currentQuestionIndex === 0);
     DOM.nextBtn.textContent = (quizState.currentQuestionIndex === quizState.questions.length - 1) ? '完成測驗' : '下一題';
+}
+
+function handlePreviousQuestion() {
+    // Save current selection before moving back
+    const selectedOption = document.querySelector('input[name="option"]:checked');
+    const answer = selectedOption ? parseInt(selectedOption.value) : quizState.userAnswers[quizState.currentQuestionIndex];
+    quizState.userAnswers[quizState.currentQuestionIndex] = answer;
+
+    if (quizState.currentQuestionIndex > 0) {
+        quizState.currentQuestionIndex--;
+        displayQuestion();
+    }
 }
 
 function handleNextQuestion() {
     const selectedOption = document.querySelector('input[name="option"]:checked');
-    const answer = selectedOption ? parseInt(selectedOption.value) : -1;
-    quizState.userAnswers.push(answer);
+    // If nothing is selected, keep the old answer for this question index (-1 if never answered)
+    const answer = selectedOption ? parseInt(selectedOption.value) : quizState.userAnswers[quizState.currentQuestionIndex];
+    quizState.userAnswers[quizState.currentQuestionIndex] = answer;
 
     if (quizState.currentQuestionIndex < quizState.questions.length - 1) {
         quizState.currentQuestionIndex++;
@@ -557,6 +594,7 @@ function renderReview(attempt) {
         reviewDiv.innerHTML = `
             <h4>Q${index + 1}: ${q.displayQuestion || q.question}</h4>
             ${q.passage ? `<div class="passage" style="white-space: pre-wrap;">${q.passage}</div>` : ''}
+            ${q.imageUrl ? `<div style="margin: 10px 0;"><img src="${q.imageUrl}" alt="Question Image" style="max-width: 250px; border-radius: 8px;"></div>` : ''}
             <ul style="list-style: none; padding-left: 10px;">${optionsHtml}</ul>
             <p>您的答案: <strong>${userAnswerIndex > -1 ? String.fromCharCode(65 + userAnswerIndex) : '未作答'}</strong> | 正確答案: <strong>${String.fromCharCode(65 + q.correct)}</strong></p>
             ${q.explanation ? `<div class="explanation"><strong>詳解:</strong> ${q.explanation}</div>` : ''}
